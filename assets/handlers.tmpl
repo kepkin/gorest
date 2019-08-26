@@ -35,19 +35,19 @@ type {{ $structName }} struct {
 func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
     var errors strings.Builder
 
-	// URI binding
-	for _, param := range c.Params {
-		switch param.Key {
-		{{- range $n, $e := .InPath }}
-		case "{{ $n }}":
-          res.{{ MakeIdentifier $n }} = param.Value
+    // URI binding
+    for _, param := range c.Params {
+        switch param.Key {
+        {{- range $n, $e := .InPath }}
+        case "{{ $n }}":
+            res.{{ MakeIdentifier $n }} = param.Value
 
 		{{- end}}
 
-		default:
-			fmt.Fprintf(&errors, "Unexpected uri parameter: `%s`", param.Key)
-		}
-	}
+        default:
+            fmt.Fprintf(&errors, "Unexpected uri parameter: `%s`", param.Key)
+        }
+    }
 
     {{- range $n, $e := .InQuery }}
         {{- if eq $e.Type "integer" }}
@@ -92,50 +92,33 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
     }
     {{- end}}
 
-	if errors.Len() > 0 {
-		err = fmt.Errorf(errors.String())
-	}
-	return
+    if errors.Len() > 0 {
+        err = fmt.Errorf(errors.String())
+    }
+    return
 {{- end}}
 }
 {{- end}}
 
 
-{{- range $url, $element := .Paths}}
-    {{- with $p := .Post}}
-      {{template "handlerDecl"  (dict "prefix" $prefix "path" $p ) }}
-    {{- end}}
+{{- range $url, $e := .Paths}}
 
-    {{- with $p := .Get}}
-      {{template "handlerDecl"  (dict "prefix" $prefix "path" $p ) }}
-    {{- end}}
-
-    {{- with $p := .Delete}}
-      {{template "handlerDecl"  (dict "prefix" $prefix "path" $p ) }}
-    {{- end}}
-
-    {{- with $p := .Put}}
-      {{template "handlerDecl"  (dict "prefix" $prefix "path" $p ) }}
+    {{- range $method, $p := (dict "POST" $e.Post "GET" $e.Get "DELETE" $e.Delete "PUT" $e.Put "PATCH" $e.Patch "OPTIONS" $e.Options) }}
+        {{- with $p }}
+{{template "handlerDecl"  (dict "prefix" $prefix "path" $p ) }}
+        {{- end}}
     {{- end}}
 
 {{- end}}
 
 
-{{- range $url, $element := .Paths}}
-    {{- with $p := .Post}}
-      {{template "reqStructDecl" $p }}
-      {{template "constructorDecl" $p }}
-    {{- end}}
-    {{- with $p := .Get}}
-      {{template "reqStructDecl" $p }}
-      {{template "constructorDecl" $p }}
-    {{- end}}
-    {{- with $p := .Delete}}
-      {{template "reqStructDecl" $p }}
-      {{template "constructorDecl" $p }}
-    {{- end}}
-    {{- with $p := .Put}}
-      {{template "reqStructDecl" $p }}
-      {{template "constructorDecl" $p }}
+{{- range $url, $e := .Paths}}
+    {{- range $method, $p := (dict "POST" $e.Post "GET" $e.Get "DELETE" $e.Delete "PUT" $e.Put "PATCH" $e.Patch "OPTIONS" $e.Options) }}
+        {{- with $p }}
+{{template "reqStructDecl" $p }}
+
+{{template "constructorDecl" $p }}
+
+        {{- end}}
     {{- end}}
 {{- end}}

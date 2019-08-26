@@ -52,6 +52,7 @@ type PathSpec struct {
 
 type PathType struct {
 	Post    *PathSpec
+	Patch   *PathSpec
 	Get     *PathSpec
 	Options *PathSpec
 	Put     *PathSpec
@@ -213,4 +214,4 @@ func ToConstructorType(spec PathSpec) (res ConstructorType, err error) {
 	return
 }
 
-//go:generate vfsgendev -source="github.com/kepkin/gorest/pkg".Assets
+//go:generate go run -tags=dev assets_generate.go -source="github.com/kepkin/gorest/pkg".Assets
