@@ -119,7 +119,7 @@ func BuildTpls() (res *template.Template, err error) {
 	return
 }
 
-func GenerateFromFile(swaggerPath string, wr io.Writer) error {
+func GenerateFromFile(swaggerPath string, packageName string, wr io.Writer) error {
 	content, err := ioutil.ReadFile(swaggerPath)
 	if err != nil {
 		return err
@@ -129,16 +129,16 @@ func GenerateFromFile(swaggerPath string, wr io.Writer) error {
 		return err
 	}
 
-	return GenerateFromSpec(spec, wr)
+	return GenerateFromSpec(spec, packageName, wr)
 }
 
-func GenerateFromSpec(spec Spec, wr io.Writer) error {
+func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
 	t, err := BuildTpls()
 	if err != nil {
 		return err
 	}
 
-	err = t.ExecuteTemplate(wr, "main.tmpl", spec)
+	err = t.ExecuteTemplate(wr, "main.tmpl", map[string]interface{}{"package": packageName, "spec": spec})
 	return err
 }
 
