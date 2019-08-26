@@ -1,0 +1,23 @@
+{{- define "componentSchema" }}
+{{- if eq .desc.Type "string" -}}
+type {{.name}} string
+{{ else if eq .desc.Type "integer" -}}
+type {{.name}} string
+{{ else if eq .desc.Type "array" -}}
+type {{.name}} {{ (ConvertType $.desc) }}
+{{ else -}}
+type {{.name}} struct {
+  {{- range $propname, $prop := .desc.Properties }}
+    {{- $parameterName := (MakeIdentifier $propname) }}
+    {{- $parameterType := (ConvertType $prop) }}
+    {{ $parameterName }} {{ $parameterType }} `json:"{{$propname}}"`
+  {{- end}}
+}
+{{ end }}
+{{- end}}
+
+
+
+{{- range $name, $desc := .Components.Schemas}}
+{{- template "componentSchema" (dict "name" $name "desc" $desc ) }}
+{{- end}}

@@ -1,0 +1,40 @@
+{{- define "interfaceComment" }}
+  // {{.}}
+{{- end}}
+
+{{- define "interfaceMethod" }}
+  {{.OperationID}}(in {{.OperationID}}Req, c *gin.Context)
+{{- end}}
+
+type {{ MakeIdentifier .Info.Title }} interface {
+  {{- range $url, $element := .Paths}}
+    {{- with $p := .Post}}
+      {{template "interfaceComment" (print "POST" $url) -}}
+      {{template "interfaceMethod"  $p   }}
+    {{- end}}
+
+    {{- with $p := .Get}}
+      {{template "interfaceComment" (print "GET" $url) -}}
+      {{template "interfaceMethod"  $p   }}
+    {{- end}}
+
+    {{- with $p := .Put}}
+      {{template "interfaceComment" (print "PUT" $url) -}}
+      {{template "interfaceMethod"  $p   }}
+    {{- end}}
+
+    {{- with $p := .Delete}}
+      {{template "interfaceComment" (print "DELETE" $url) -}}
+      {{template "interfaceMethod"  $p   }}
+    {{- end}}
+
+    {{- with $p := .Options}}
+      {{template "interfaceComment" (print "OPTIONS" $url) -}}
+      {{template "interfaceMethod"  $p   }}
+    {{- end}}
+  {{- end}}
+}
+
+type {{ MakeIdentifier .Info.Title }}Server struct {
+  Srv  {{ MakeIdentifier .Info.Title }}
+}

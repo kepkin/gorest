@@ -1,0 +1,21 @@
+package api
+
+import (
+    "fmt"
+    "github.com/gin-gonic/gin"
+    "strings"
+)
+
+{{- define "interfaceComment" }}
+  // {{.}}
+{{- end}}
+
+{{- define "interfaceMethod" }}
+  {{.OperationID}}(in {{.OperationID}}Req, c *gin.Context)
+{{- end}}
+
+{{template "interface.tmpl" . -}}
+
+{{template "handlers.tmpl" . -}}
+
+{{template "types.tmpl" . -}}
