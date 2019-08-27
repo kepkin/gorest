@@ -28,6 +28,7 @@ func Generate(swaggerFile string, options Options) error {
 		if err != nil {
 			return err
 		}
+		defer f.Close()
 	}
 
 	if options.PackageName == "" {

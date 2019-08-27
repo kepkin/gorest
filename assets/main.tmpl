@@ -3,9 +3,11 @@
 package {{.package}}
 
 import (
-    "fmt"
-    "github.com/gin-gonic/gin"
-    "strings"
+	"encoding/json"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"strconv"
+	"strings"
 )
 
 {{template "interface.tmpl" .spec -}}
