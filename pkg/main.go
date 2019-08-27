@@ -146,12 +146,13 @@ func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
 	}
 
 	specialTypes := map[string]SchemaType{}
-	for k, v := range spec.Components.Schemas {
-		for kk, vv := range v.Properties {
-			if vv.Type == "object" {
-				newTypeName := k + kk + "Type"
-				specialTypes[newTypeName] = vv
-				v.Properties[kk] = SchemaType{Ref: "#/components/schemas/" + newTypeName}
+	for name, schema := range spec.Components.Schemas {
+		for propName, propSchema := range schema.Properties {
+			if propSchema.Type == "object" {
+				normalizedPropName, _ := MakeIdentifier(propName)
+				newTypeName := name + normalizedPropName + "Type"
+				specialTypes[newTypeName] = propSchema
+				schema.Properties[propName] = SchemaType{Ref: "#/components/schemas/" + newTypeName}
 			}
 		}
 	}
@@ -169,8 +170,6 @@ func MakeIdentifier(s string) (string, error) {
 	s = strings.ReplaceAll(s, " ", "_")
 	s = strcase.ToCamel(s)
 	return s, nil
-
-
 }
 
 func GetNameFromRef(s string) string {

@@ -52,9 +52,15 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
     {{- range $n, $e := .InQuery }}
         {{- if eq $e.Type "integer" }}
             {{- if eq $e.Format "int64" }}
-    res.{{ MakeIdentifier $n }} = strconv.ParseInt(c.Query("{{ $n }}"), 10, 64)
+    res.{{ MakeIdentifier $n }}, err = strconv.ParseInt(c.Query("{{ $n }}"), 10, 64)
+    if err != nil {
+        return
+    }
             {{- else}}
-    res.{{ MakeIdentifier $n }} = strconv.Atoi(c.Query("{{ $n }}"))
+    res.{{ MakeIdentifier $n }}, err = strconv.Atoi(c.Query("{{ $n }}"))
+    if err != nil {
+            return
+    }
             {{- end}}
         {{- else}}
     res.{{ MakeIdentifier $n }} = c.Query("{{ $n }}")
