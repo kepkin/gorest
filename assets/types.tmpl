@@ -5,6 +5,8 @@ type {{.name}} string
 type {{.name}} string
 {{ else if eq .desc.Type "array" -}}
 type {{.name}} {{ (ConvertType $.desc) }}
+{{ else if .desc.AdditionalProperties -}}
+type {{.name}} = json.RawMessage
 {{ else -}}
 type {{.name}} struct {
   {{- range $propname, $prop := .desc.Properties }}
@@ -20,4 +22,5 @@ type {{.name}} struct {
 
 {{- range $name, $desc := .Components.Schemas}}
 {{- template "componentSchema" (dict "name" $name "desc" $desc ) }}
-{{- end}}
+
+{{end}}

@@ -82,3 +82,27 @@ func TestObject(t *testing.T) {
 
 	assert.Equal(t, objectExpected, result.String())
 }
+
+const additionalPropsSpec =
+`type: object
+additionalProperties:
+  type: object
+`
+
+const additionalPropsExpected = `type SutType = json.RawMessage
+`
+
+func TestAdditionalProps(t *testing.T) {
+	var sut SchemaType
+
+	err := yaml.Unmarshal([]byte(additionalPropsSpec), &sut)
+	assert.Nil(t, err, "unexpected: %v", err)
+	tpl, err := BuildTpls()
+	assert.Nil(t, err, "unexpected: %v", err)
+
+	result := strings.Builder{}
+	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"name": "SutType", "desc": sut})
+	assert.Nil(t, err, "unexpected: %v", err)
+
+	assert.Equal(t, additionalPropsExpected, result.String())
+}

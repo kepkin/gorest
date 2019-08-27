@@ -24,11 +24,12 @@ type InfoType struct {
 }
 
 type SchemaType struct {
-	Type   string
-	Properties map[string]SchemaType
-	Format string
-	Items  *SchemaType
-	Ref    string `yaml:"$ref"`
+	Type                 string
+	Properties           map[string]SchemaType
+	AdditionalProperties *SchemaType `yaml:"additionalProperties"`
+	Format               string
+	Items                *SchemaType
+	Ref                  string `yaml:"$ref"`
 }
 
 type ContentType struct {
@@ -150,7 +151,7 @@ func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
 			if vv.Type == "object" {
 				newTypeName := k + kk + "Type"
 				specialTypes[newTypeName] = vv
-				spec.Components.Schemas[k] = SchemaType{Ref: "#/components/schemas/" + newTypeName}
+				v.Properties[kk] = SchemaType{Ref: "#/components/schemas/" + newTypeName}
 			}
 		}
 	}
