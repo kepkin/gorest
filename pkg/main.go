@@ -88,10 +88,11 @@ func BuildTpls() (res *template.Template, err error) {
 	a := sprig.GenericFuncMap()
 	res = template.New("").Funcs(a)
 	res = res.Funcs(template.FuncMap{
-		"MakeIdentifier": MakeIdentifier,
-		"ConvertType":    ConvertType,
-		"GetNameFromRef": GetNameFromRef,
+		"MakeIdentifier":    MakeIdentifier,
+		"ConvertType":       ConvertType,
+		"GetNameFromRef":    GetNameFromRef,
 		"ToConstructorType": ToConstructorType,
+		"ConvertUrl":        ConvertUrl,
 	})
 
 	dir, err := Assets.Open("/")
@@ -208,6 +209,10 @@ type ConstructorType struct {
 	InHeader     map[string]SchemaType
 	Body         map[string]SchemaType
 	BodyRequired bool
+}
+
+func ConvertUrl(url string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(url, "{", ":"), "}", "")
 }
 
 func ToConstructorType(spec PathSpec) (res ConstructorType, err error) {
