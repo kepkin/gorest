@@ -3,7 +3,17 @@
 
 {{- define "handlerDecl" }}
 func (server {{.prefix}}Server) _{{.prefix}}_{{.path.OperationID}}_Handler(c *gin.Context) {
-    in, _ := Make{{.path.OperationID}}Req(c)
+    in, err := Make{{.path.OperationID}}Req(c)
+    if len(err) > 0 {
+            var errMsg strings.Builder
+            for i := range err {
+                fmt.Fprintln(&errMsg, err[i].Error())
+            }
+    		c.JSON(http.StatusBadRequest, struct {
+    			Error string `json:"error"`
+    		}{errMsg.String()})
+    		return
+    	}
     server.Srv.{{.path.OperationID}}(in, c)
 }
 {{- end}}
@@ -32,8 +42,9 @@ type {{ $structName }} struct {
 
       {{- with ToConstructorType . -}}
 
-func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
-    var errors strings.Builder
+func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, errorList []error) {
+    var err error
+    _ = err
 
     // URI binding
     for _, param := range c.Params {
@@ -45,7 +56,7 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
 		{{- end}}
 
         default:
-            fmt.Fprintf(&errors, "Unexpected uri parameter: `%s`", param.Key)
+            errorList = append(errorList, fmt.Errorf("Unexpected uri parameter: `%s`", param.Key))
         }
     }
 
@@ -54,12 +65,12 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
             {{- if eq $e.Format "int64" }}
     res.{{ MakeIdentifier $n }}, err = strconv.ParseInt(c.Query("{{ $n }}"), 10, 64)
     if err != nil {
-        return
+        errorList = append(errorList, errors.Wrap(err, "Expecting int64 in {{ $n }}"))
     }
             {{- else}}
     res.{{ MakeIdentifier $n }}, err = strconv.Atoi(c.Query("{{ $n }}"))
     if err != nil {
-            return
+        errorList = append(errorList, errors.Wrap(err, "Expecting integer in {{ $n }}"))
     }
             {{- end}}
         {{- else}}
@@ -74,14 +85,14 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
 	{{- if .BodyRequired }}
 
     if c.Request == nil || c.Request.Body == nil {
-        fmt.Fprintf(&errors, "Body is absent")
+        errorList = append(errorList, fmt.Errorf("Body is absent"))
     }
     {{- end}}
 
     {{- if not .Body }}
 
-    if c.Request == nil || c.Request.Body != nil {
-        fmt.Fprintf(&errors, "Unexpected body")
+    if c.Request == nil || c.Request.Body != http.NoBody {
+        errorList = append(errorList, fmt.Errorf("Unexpected body"))
     }
     {{- end}}
 
@@ -91,16 +102,13 @@ func Make{{ $structName }}(c *gin.Context) (res {{$structName}}, err error) {
     case "application/json":
         dec := json.NewDecoder(c.Request.Body)
     	if err := dec.Decode(&res.Body); err != nil {
-    		fmt.Fprintf(&errors, "Cant parse JSON") //TODO: investigate for more detailed error
+    		errorList = append(errorList, errors.Wrap(err, "Can't Parse JSON"))
     	}
     default:
-        fmt.Fprintf(&errors, "Unsupported content-type: %v", ct)
+        errorList = append(errorList, fmt.Errorf("Unsupported content-type: %v", ct))
     }
     {{- end}}
 
-    if errors.Len() > 0 {
-        err = fmt.Errorf(errors.String())
-    }
     return
 {{- end}}
 }

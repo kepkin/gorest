@@ -163,7 +163,10 @@ func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
 	}
 	tmpResult := strings.Builder{}
 	err = t.ExecuteTemplate(&tmpResult, "main.tmpl", map[string]interface{}{"package": packageName, "spec": spec})
-	finalizeGoSource(tmpResult.String(), wr)
+	if err != nil {
+		return err
+	}
+	err = finalizeGoSource(tmpResult.String(), wr)
 	return err
 }
 
