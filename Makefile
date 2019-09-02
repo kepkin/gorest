@@ -1,6 +1,6 @@
 
 gorest: generate
-	go build -tags dev ./cmd/gorest
+	go build ./cmd/gorest
 
 generate:
 	go generate ./...

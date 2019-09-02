@@ -74,7 +74,7 @@ paths:
     get:
       summary: Gets books
       tags: [srv]
-      operationId: ListPolicies
+      operationId: BooksSearch
       parameters:
         - name: id
           in: path

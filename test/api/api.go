@@ -10,6 +10,10 @@ func (api *TestApiImpl) CreatePoliciesInBatch(in CreatePoliciesInBatchReq, c *gi
 
 }
 
-func (api *TestApiImpl) ListPolicies(in ListPoliciesReq, c *gin.Context) {
+func (api *TestApiImpl) ListPolicies(in ListPoliciesReq, c *gin.Context)  {
+
+}
+
+func (api *TestApiImpl) BooksSearch(in BooksSearchReq, c *gin.Context) {
 
 }
