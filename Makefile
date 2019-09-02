@@ -9,6 +9,6 @@ fmt:
 	go fmt ./...
 
 test: generate
-	go test ./...
+	go test ./... -count=1
 
 .PHONY: gorest test
