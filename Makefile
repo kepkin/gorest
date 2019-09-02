@@ -8,7 +8,7 @@ generate:
 fmt:
 	go fmt ./...
 
-test:
-	go test ./...
+test: generate
+	go test ./... -count=1
 
 .PHONY: gorest test
