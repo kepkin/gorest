@@ -1,6 +1,6 @@
 
 gorest: generate
-	go build ./cmd/gorest
+	go build -tags dev ./cmd/gorest
 
 generate:
 	go generate ./...
@@ -8,7 +8,7 @@ generate:
 fmt:
 	go fmt ./...
 
-test:
+test: generate
 	go test ./...
 
 .PHONY: gorest test

@@ -3,19 +3,20 @@ package pkg
 import (
 	"bytes"
 	"fmt"
-	"github.com/Masterminds/sprig"
-	"github.com/iancoleman/strcase"
 	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/scanner"
 	"go/token"
-	"golang.org/x/tools/go/ast/astutil"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/sprig"
+	"github.com/iancoleman/strcase"
+	"golang.org/x/tools/go/ast/astutil"
+	"gopkg.in/yaml.v2"
 )
 
 type InfoType struct {
@@ -73,9 +74,9 @@ type ComponentsType struct {
 }
 
 type Spec struct {
-	Openapi string
-	Info    InfoType
-	Paths   PathMap
+	Openapi    string
+	Info       InfoType
+	Paths      PathMap
 	Components ComponentsType
 }
 
@@ -243,7 +244,6 @@ func ToConstructorType(spec PathSpec) (res ConstructorType, err error) {
 
 	return
 }
-
 
 // finalizeGoSource removes unneeded imports from the given Go source file and
 // runs go fmt on it.
