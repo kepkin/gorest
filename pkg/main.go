@@ -200,6 +200,9 @@ func ConvertType(spec SchemaType) string {
 	case "array":
 		type_ = "[]" + GetNameFromRef(spec.Items.Ref)
 
+	case "boolean":
+		type_ = "bool"
+		
 	default:
 		type_ = spec.Type
 	}
