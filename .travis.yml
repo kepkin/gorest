@@ -5,5 +5,5 @@ go:
 - master
 
 script:
-  - make test
-  - make
+  - env GO111MODULE=on make test
+  - env GO111MODULE=on make
