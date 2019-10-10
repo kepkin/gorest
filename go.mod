@@ -23,3 +23,6 @@ require (
 	golang.org/x/tools v0.0.0-20190311212946-11955173bddd
 	gopkg.in/yaml.v2 v2.2.2
 )
+
+// https://github.com/gin-gonic/gin/issues/1673
+replace github.com/ugorji/go v1.1.4 => github.com/ugorji/go/codec v0.0.0-20190204201341-e444a5086c43
