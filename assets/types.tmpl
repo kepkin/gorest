@@ -22,6 +22,6 @@
     {{- end }}
 {{- end }}
 
-{{ range $schemaName, $schema := .Components.Schemas}}
+{{ range $schemaName, $schema := .Components.Schemas }}
     {{- template "componentSchema" (dict "schemaName" $schemaName "schema" $schema ) }}
 {{ end }}

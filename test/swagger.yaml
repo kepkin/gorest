@@ -12,6 +12,20 @@ servers:
 
 paths:
   /v1/payment:
+    get:
+      operationId: GetPayment
+
+      parameters:
+        - name: id
+          description: 'Payment ID'
+          in: query
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: OK
+
     post:
       summary: 'Provide user payment'
       operationId: ProvidePayment

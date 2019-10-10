@@ -147,7 +147,6 @@ func BuildTemplates() (res *template.Template, err error) {
 	res = template.New("").Funcs(a)
 	res = res.Funcs(template.FuncMap{
 		"MakeIdentifier":    MakeIdentifier,
-		"DetermineType":     DetermineType,
 		"GetNameFromRef":    GetNameFromRef,
 		"ToConstructorType": ToConstructorType,
 		"ConvertUrl":        ConvertUrl,

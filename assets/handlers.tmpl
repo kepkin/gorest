@@ -24,8 +24,7 @@ func (server {{.prefix}}Server) _{{.prefix}}_{{.path.OperationID}}_Handler(c *gi
 type {{ $structName }} struct {
     {{- range $parameter := .Parameters}}
     {{- $parameterName := (MakeIdentifier $parameter.Name) }}
-    {{- $parameterType := $parameter.GoType }}
-    {{ $parameterName }} {{ $parameterType }}
+    {{ $parameterName }} {{ $parameter.Schema.GoType }}
     {{- end}}
 
     {{- with .RequestBody }}

@@ -15,6 +15,10 @@ type PaymentGatewayAPIImpl struct {
 	ProvidedSumTotal int64
 }
 
+func (p *PaymentGatewayAPIImpl) GetPayment(in GetPaymentReq, c *gin.Context) {
+	panic("implement me")
+}
+
 func (p PaymentGatewayAPIImpl) ProvidePayment(in ProvidePaymentReq, c *gin.Context) {
 	p.ProvidedSumTotal += in.Body.Sum.IntPart()
 	c.AbortWithStatus(http.StatusOK)
