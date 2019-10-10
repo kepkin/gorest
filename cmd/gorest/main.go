@@ -16,9 +16,9 @@ limitations under the License.
 package main
 
 import (
-  "github.com/kepkin/gorest/cmd/gorest/cmd"
+	"github.com/kepkin/gorest/cmd/gorest/cmd"
 )
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }

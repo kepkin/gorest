@@ -19,19 +19,61 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	arrayType   = "array"
+	booleanType = "boolean"
+	integerType = "integer"
+	numberType  = "number"
+	objectType  = "object"
+	stringType  = "string"
+)
+
+const (
+	integer32bit = "int32"
+	integer64bit = "int64"
+
+	numberFloat  = "float"
+	numberDouble = "double"
+)
+
 type InfoType struct {
 	Title   string
 	Version string
 }
 
+type ServerType struct {
+	Url         string
+	Description string
+}
+
+type PropertyName = string
+
 type SchemaType struct {
 	Type                 string
-	Properties           map[string]SchemaType
-	AdditionalProperties *SchemaType `yaml:"additionalProperties"`
 	Format               string
+	Properties           map[PropertyName]SchemaType
+	AdditionalProperties *SchemaType `yaml:"additionalProperties"`
 	Items                *SchemaType
 	Ref                  string `yaml:"$ref"`
+
+	GoType        string
+	HasCustomType bool
 }
+
+func (s *SchemaType) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type SchemaTypeYAML SchemaType // To avoid a recursive unmarshalling
+	err := unmarshal((*SchemaTypeYAML)(s))
+	if err != nil {
+		return err
+	}
+
+	if err = DetermineType(s); err != nil {
+		return err
+	}
+	return nil
+}
+
+type MIMEType = string
 
 type ContentType struct {
 	Schema SchemaType
@@ -40,10 +82,10 @@ type ContentType struct {
 type RequestBodyType struct {
 	Description string
 	Required    bool
-	Content     map[string]ContentType
+	Content     map[MIMEType]ContentType
 }
 
-type ParametersType struct {
+type ParameterType struct {
 	Name     string
 	In       string
 	Required bool
@@ -54,9 +96,12 @@ type PathSpec struct {
 	Summary     string
 	Description string
 	OperationID string `yaml:"operationId"`
-	Parameters  []ParametersType
+	Parameters  []ParameterType
 	RequestBody RequestBodyType `yaml:"requestBody"`
+	// TODO(a.telyshev): Responses
 }
+
+type Path = string
 
 type PathType struct {
 	Post    *PathSpec
@@ -67,15 +112,27 @@ type PathType struct {
 	Delete  *PathSpec
 }
 
-type PathMap map[string]PathType
+type PathMap map[Path]PathType
 
+type SchemaName = string
+
+// ComponentsType store components described at https://swagger.io/docs/specification/components/
 type ComponentsType struct {
-	Schemas map[string]SchemaType
+	Schemas map[SchemaName]SchemaType
+	// TODO(a.telyshev): Parameters
+	// TODO(a.telyshev): securitySchemes
+	// TODO(a.telyshev): requestBodies
+	// TODO(a.telyshev): responses
+	// TODO(a.telyshev): headers
+	// TODO(a.telyshev): examples
+	// TODO(a.telyshev): links
+	// TODO(a.telyshev): callbacks
 }
 
 type Spec struct {
-	Openapi    string
+	OpenAPI    string `yaml:"openapi"`
 	Info       InfoType
+	Servers    []ServerType
 	Paths      PathMap
 	Components ComponentsType
 }
@@ -85,12 +142,11 @@ func ReadSpec(in []byte) (res Spec, err error) {
 	return
 }
 
-func BuildTpls() (res *template.Template, err error) {
+func BuildTemplates() (res *template.Template, err error) {
 	a := sprig.GenericFuncMap()
 	res = template.New("").Funcs(a)
 	res = res.Funcs(template.FuncMap{
 		"MakeIdentifier":    MakeIdentifier,
-		"ConvertType":       ConvertType,
 		"GetNameFromRef":    GetNameFromRef,
 		"ToConstructorType": ToConstructorType,
 		"ConvertUrl":        ConvertUrl,
@@ -106,7 +162,7 @@ func BuildTpls() (res *template.Template, err error) {
 	}
 
 	if len(files) == 0 {
-		return res, fmt.Errorf("gorest: No template files!")
+		return res, fmt.Errorf("gorest: no template files")
 	}
 
 	for _, f := range files {
@@ -142,17 +198,17 @@ func GenerateFromFile(swaggerPath string, packageName string, wr io.Writer) erro
 }
 
 func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
-	t, err := BuildTpls()
+	t, err := BuildTemplates()
 	if err != nil {
 		return err
 	}
 
 	specialTypes := map[string]SchemaType{}
-	for name, schema := range spec.Components.Schemas {
+	for schemaName, schema := range spec.Components.Schemas {
 		for propName, propSchema := range schema.Properties {
 			if propSchema.Type == "object" {
-				normalizedPropName, _ := MakeIdentifier(propName)
-				newTypeName := name + normalizedPropName + "Type"
+				normalizedPropName := MakeIdentifier(propName)
+				newTypeName := schemaName + normalizedPropName + "Type"
 				specialTypes[newTypeName] = propSchema
 				schema.Properties[propName] = SchemaType{Ref: "#/components/schemas/" + newTypeName}
 			}
@@ -171,43 +227,80 @@ func GenerateFromSpec(spec Spec, packageName string, wr io.Writer) error {
 	return err
 }
 
-func MakeIdentifier(s string) (string, error) {
-	s = strings.ReplaceAll(s, " ", "_")
-	s = strcase.ToCamel(s)
-	return s, nil
+func MakeIdentifier(s string) string {
+	return strcase.ToCamel(strings.ReplaceAll(s, " ", "_"))
+}
+
+func MakeTitledIdentifier(s string) string {
+	return strings.Title(MakeIdentifier(s))
 }
 
 func GetNameFromRef(s string) string {
 	return s[len("#/components/schemas/"):]
 }
 
-func ConvertType(spec SchemaType) string {
+func DetermineType(spec *SchemaType) error {
 	if spec.Ref != "" {
-		return GetNameFromRef(spec.Ref)
+		spec.GoType = GetNameFromRef(spec.Ref)
+		return nil
 	}
 
 	var type_ string
 
 	switch spec.Type {
-	case "integer":
-		switch spec.Format {
-		case "int64":
-			type_ = "int64"
-		default:
-			type_ = "int"
-		}
-
-	case "array":
+	case arrayType:
 		type_ = "[]" + GetNameFromRef(spec.Items.Ref)
 
-	case "boolean":
+	case booleanType:
 		type_ = "bool"
-		
+
+	case integerType:
+		switch spec.Format {
+		case "":
+			type_ = "int" // Integer numbers
+
+		case integer32bit:
+			type_ = "int32" // Signed 32-bit integers (commonly used integer type)
+
+		case integer64bit:
+			type_ = "int64" // Signed 64-bit integers (long type)
+
+		default:
+			type_ = MakeTitledIdentifier(spec.Format)
+			spec.HasCustomType = true
+			fmt.Printf("please implement own integer type `%s`\n", type_)
+		}
+
+	case numberType:
+		switch spec.Format {
+		case "":
+			type_ = "float" // Any numbers
+
+		case numberFloat:
+			type_ = "float32" // Floating-point numbers
+
+		case numberDouble:
+			type_ = "float64" // Floating-point numbers with double precision
+
+		default:
+			type_ = MakeTitledIdentifier(spec.Format)
+			spec.HasCustomType = true
+			fmt.Printf("please implement own number type `%s`\n", type_)
+		}
+
+	case objectType:
+		break
+
+	case stringType:
+		// TODO(a.telyshev): Support format
+		type_ = "string"
+
 	default:
-		type_ = spec.Type
+		return fmt.Errorf("unknown data type: %v", spec.Type)
 	}
 
-	return type_
+	spec.GoType = type_
+	return nil
 }
 
 type ConstructorType struct {

@@ -1,19 +1,25 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
 
-type TestApiImpl struct {
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
+)
 
+type Decimal = decimal.Decimal
+
+var _ PaymentGatewayAPI = (*PaymentGatewayAPIImpl)(nil)
+
+type PaymentGatewayAPIImpl struct {
+	ProvidedSumTotal int64
 }
 
-func (api *TestApiImpl) CreatePoliciesInBatch(in CreatePoliciesInBatchReq, c *gin.Context) {
-
+func (p *PaymentGatewayAPIImpl) GetPayment(in GetPaymentReq, c *gin.Context) {
+	panic("implement me")
 }
 
-func (api *TestApiImpl) ListPolicies(in ListPoliciesReq, c *gin.Context)  {
-
-}
-
-func (api *TestApiImpl) BooksSearch(in BooksSearchReq, c *gin.Context) {
-
+func (p PaymentGatewayAPIImpl) ProvidePayment(in ProvidePaymentReq, c *gin.Context) {
+	p.ProvidedSumTotal += in.Body.Sum.IntPart()
+	c.AbortWithStatus(http.StatusOK)
 }

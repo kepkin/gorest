@@ -1,57 +1,56 @@
 package pkg
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 const stringAliasSpec = `type: string`
-const stringAliasExpected = `type SutType string
-`
+const stringAliasExpected = `
+        type SutType string`
 
 func TestStringAlias(t *testing.T) {
 	var sut SchemaType
 
 	err := yaml.Unmarshal([]byte(stringAliasSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
-	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"name": "SutType", "desc": sut})
+	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"schemaName": "SutType", "schema": sut})
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	assert.Equal(t, stringAliasExpected, result.String())
 }
 
-const arraySpec =
-`type: array
+const arraySpec = `type: array
 items:
   $ref: "#/components/schemas/Author"
 `
 
-const arrayExpected = `type SutType []Author
-`
+const arrayExpected = `
+        type SutType []Author`
 
 func TestArray(t *testing.T) {
 	var sut SchemaType
 
 	err := yaml.Unmarshal([]byte(arraySpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
-	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"name": "SutType", "desc": sut})
+	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"schemaName": "SutType", "schema": sut})
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	assert.Equal(t, arrayExpected, result.String())
 }
 
-const objectSpec =
-`type: object
+const objectSpec = `type: object
 properties:
   title:
     type: string
@@ -61,47 +60,45 @@ properties:
       $ref: "#/components/schemas/Author"
 `
 
-const objectExpected =
-`type SutType struct {
-    AuthorsList []Author `+"`json:\"authors_list\"`" + `
-    Title string `+"`json:\"title\"`" + `
-}
-`
+const objectExpected = `
+            type SutType struct {
+                AuthorsList []Author ` + "`json:\"authors_list\"`" + `
+                Title string ` + "`json:\"title\"`" + `
+            }`
 
 func TestObject(t *testing.T) {
 	var sut SchemaType
 
 	err := yaml.Unmarshal([]byte(objectSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
-	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"name": "SutType", "desc": sut})
+	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"schemaName": "SutType", "schema": sut})
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	assert.Equal(t, objectExpected, result.String())
 }
 
-const additionalPropsSpec =
-`type: object
+const additionalPropsSpec = `type: object
 additionalProperties:
   type: object
 `
 
-const additionalPropsExpected = `type SutType = json.RawMessage
-`
+const additionalPropsExpected = `
+            type SutType = json.RawMessage`
 
 func TestAdditionalProps(t *testing.T) {
 	var sut SchemaType
 
 	err := yaml.Unmarshal([]byte(additionalPropsSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
-	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"name": "SutType", "desc": sut})
+	err = tpl.ExecuteTemplate(&result, "componentSchema", map[string]interface{}{"schemaName": "SutType", "schema": sut})
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	assert.Equal(t, additionalPropsExpected, result.String())
