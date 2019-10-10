@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Test Api
+  title: Payment Gateway API
   version: v1
 
 servers:
@@ -11,115 +11,35 @@ servers:
     description: Develop
 
 paths:
-  '/v1/books':
+  /v1/payment:
     post:
-      summary: Adds Resource
-      tags: [srv]
-      description: Adds new policies and updates old ones if they exists
-      operationId: CreatePoliciesInBatch
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-
-        - in: header
-          name: X-access-token
-
-          required: true
-          schema:
-            type: string
+      summary: 'Provide user payment'
+      operationId: ProvidePayment
 
       requestBody:
-        description: "Create policy request"
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Book"
+              $ref: '#/components/schemas/Payment'
 
       responses:
         '200':
-          description: A successful response.
-        '400':
-          description: Error on invalid input
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateBookResp'
-
-  '/v1/books/{id}/tags':
-    get:
-      summary: Gets books tags
-      tags: [srv]
-      operationId: ListPolicies
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-
-      responses:
-        '200':
-          description: A successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tags'
-
-
-  '/v1/books_search':
-    get:
-      summary: Gets books
-      tags: [srv]
-      operationId: BooksSearch
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-
-        - in: header
-          name: X-access-token
-          required: true
-          schema:
-            type: string
-
-        - name: filter_author
-          in: query
-          description: "You can specify several policy type separated by comma."
-          required: false
-          schema:
-            type: string
-            example: "Dostoevsky,Tolstoy"
-
-      responses:
-        '200':
-          description: A successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListBooks'
+          description: OK
 
 components:
   schemas:
-    Book:
+    Payment:
       type: object
       properties:
-        title:
+        payment_id:
           type: string
-        authors:
-          type: array
-          items:
-            $ref: '#/components/schemas/Author'
+          required: true
 
-    Author:
-      type: object
-      properties:
-        name:
+        merchant_id:
           type: string
-        surname:
-          type: string
+          required: true
+
+        sum:
+          type: number
+          format: decimal

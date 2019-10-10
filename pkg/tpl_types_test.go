@@ -1,10 +1,11 @@
 package pkg
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 const stringAliasSpec = `type: string`
@@ -16,7 +17,7 @@ func TestStringAlias(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(stringAliasSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
@@ -26,8 +27,7 @@ func TestStringAlias(t *testing.T) {
 	assert.Equal(t, stringAliasExpected, result.String())
 }
 
-const arraySpec =
-`type: array
+const arraySpec = `type: array
 items:
   $ref: "#/components/schemas/Author"
 `
@@ -40,7 +40,7 @@ func TestArray(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(arraySpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
@@ -50,8 +50,7 @@ func TestArray(t *testing.T) {
 	assert.Equal(t, arrayExpected, result.String())
 }
 
-const objectSpec =
-`type: object
+const objectSpec = `type: object
 properties:
   title:
     type: string
@@ -61,10 +60,9 @@ properties:
       $ref: "#/components/schemas/Author"
 `
 
-const objectExpected =
-`type SutType struct {
-    AuthorsList []Author `+"`json:\"authors_list\"`" + `
-    Title string `+"`json:\"title\"`" + `
+const objectExpected = `type SutType struct {
+    AuthorsList []Author ` + "`json:\"authors_list\"`" + `
+    Title string ` + "`json:\"title\"`" + `
 }
 `
 
@@ -73,7 +71,7 @@ func TestObject(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(objectSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}
@@ -83,8 +81,7 @@ func TestObject(t *testing.T) {
 	assert.Equal(t, objectExpected, result.String())
 }
 
-const additionalPropsSpec =
-`type: object
+const additionalPropsSpec = `type: object
 additionalProperties:
   type: object
 `
@@ -97,7 +94,7 @@ func TestAdditionalProps(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(additionalPropsSpec), &sut)
 	assert.Nil(t, err, "unexpected: %v", err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err, "unexpected: %v", err)
 
 	result := strings.Builder{}

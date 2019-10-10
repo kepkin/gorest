@@ -1,10 +1,11 @@
 package pkg
 
 import (
-	"github.com/stretchr/testify/assert"
-	"gopkg.in/yaml.v2"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 const pathSpecYaml = `
@@ -87,7 +88,7 @@ func TestRequestTypeDeclaration(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(pathSpecYaml), &sut)
 	assert.Nil(t, err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err)
 
 	result := strings.Builder{}
@@ -139,7 +140,7 @@ func TestRequestTypeConstructor(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(pathSpecYaml), &sut)
 	assert.Nil(t, err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err)
 
 	result := strings.Builder{}
@@ -176,7 +177,7 @@ func TestRequestTypeConstructorWithoutRequestBody(t *testing.T) {
 
 	err := yaml.Unmarshal([]byte(pathSpecWithoutRequestBodyYaml), &sut)
 	assert.Nil(t, err)
-	tpl, err := BuildTpls()
+	tpl, err := BuildTemplates()
 	assert.Nil(t, err)
 
 	result := strings.Builder{}

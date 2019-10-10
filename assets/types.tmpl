@@ -1,26 +1,27 @@
 {{- define "componentSchema" }}
-{{- if eq .desc.Type "string" -}}
-type {{.name}} string
-{{ else if eq .desc.Type "integer" -}}
-type {{.name}} string
-{{ else if eq .desc.Type "array" -}}
-type {{.name}} {{ (ConvertType $.desc) }}
-{{ else if .desc.AdditionalProperties -}}
-type {{.name}} = json.RawMessage
-{{ else -}}
-type {{.name}} struct {
-  {{- range $propname, $prop := .desc.Properties }}
-    {{- $parameterName := (MakeIdentifier $propname) }}
-    {{- $parameterType := (ConvertType $prop) }}
-    {{ $parameterName }} {{ $parameterType }} `json:"{{$propname}}"`
-  {{- end}}
-}
+    {{- if eq .schema.Type "object" }}
+        {{- if .schema.AdditionalProperties }}
+            type {{.schemaName}} = json.RawMessage
+        {{- else }}
+            type {{.schemaName}} struct {
+              {{- range $propname, $prop := .schema.Properties }}
+                {{- $parameterName := (MakeIdentifier $propname) }}
+                {{- $parameterType := $prop.GoType }}
+                {{ $parameterName }} {{ $parameterType }} `json:"{{ $propname }}"`
+              {{- end}}
+            }
+
+            {{- range $propname, $prop := .schema.Properties }}
+                {{- if $prop.HasCustomType }}
+                    var _ json.Unmarshaler = (*{{ $prop.GoType }})(nil)
+                {{- end}}
+            {{- end }}
+        {{- end }}
+    {{- else }}
+        type {{.schemaName}} {{ .schema.GoType }}
+    {{- end }}
+{{- end }}
+
+{{ range $schemaName, $schema := .Components.Schemas}}
+    {{- template "componentSchema" (dict "schemaName" $schemaName "schema" $schema ) }}
 {{ end }}
-{{- end}}
-
-
-
-{{- range $name, $desc := .Components.Schemas}}
-{{- template "componentSchema" (dict "name" $name "desc" $desc ) }}
-
-{{end}}
