@@ -48,12 +48,24 @@ components:
       properties:
         payment_id:
           type: string
-          required: true
 
         merchant_id:
           type: string
-          required: true
 
         sum:
           type: number
           format: decimal
+
+        meta:
+          type: object
+
+        kek:
+          type: object
+          properties:
+            name:
+              type: string
+            lel:
+              type: object
+              properties:
+                kuk:
+                  type: string

@@ -84,12 +84,12 @@ const requestTypeDeclarationExpected = `type CreateResourceReq struct {
 }`
 
 func TestRequestTypeDeclaration(t *testing.T) {
-	var sut PathSpec
+	var sut pathSpec
 
-	err := yaml.Unmarshal([]byte(pathSpecYaml), &sut)
-	assert.Nil(t, err)
+	assert.NoError(t, yaml.Unmarshal([]byte(pathSpecYaml), &sut))
+
 	tpl, err := BuildTemplates()
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 
 	result := strings.Builder{}
 	err = tpl.ExecuteTemplate(&result, "reqStructDecl", sut)
@@ -136,7 +136,7 @@ const requestTypeConstructorExpected = `func MakeCreateResourceReq(c *gin.Contex
 }`
 
 func TestRequestTypeConstructor(t *testing.T) {
-	var sut PathSpec
+	var sut pathSpec
 
 	err := yaml.Unmarshal([]byte(pathSpecYaml), &sut)
 	assert.Nil(t, err)
@@ -173,7 +173,7 @@ const requestTypeConstructorWithoutReqBodyExpected = `func MakeCreateResourceReq
 }`
 
 func TestRequestTypeConstructorWithoutRequestBody(t *testing.T) {
-	var sut PathSpec
+	var sut pathSpec
 
 	err := yaml.Unmarshal([]byte(pathSpecWithoutRequestBodyYaml), &sut)
 	assert.Nil(t, err)

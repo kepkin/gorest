@@ -1,8 +1,6 @@
 {{- define "componentSchema" }}
     {{- if eq .schema.Type "object" }}
-        {{- if .schema.AdditionalProperties }}
-            type {{.schemaName}} = json.RawMessage
-        {{- else }}
+        {{- if .schema.Properties }}
             type {{.schemaName}} struct {
               {{- range $propname, $prop := .schema.Properties }}
                 {{- $parameterName := (MakeIdentifier $propname) }}
@@ -10,18 +8,26 @@
                 {{ $parameterName }} {{ $parameterType }} `json:"{{ $propname }}"`
               {{- end}}
             }
-
-            {{- range $propname, $prop := .schema.Properties }}
-                {{- if $prop.HasCustomType }}
-                    var _ json.Unmarshaler = (*{{ $prop.GoType }})(nil)
-                {{- end}}
-            {{- end }}
+        {{- else }}
+            type {{.schemaName}} = json.RawMessage
         {{- end }}
     {{- else }}
         type {{.schemaName}} {{ .schema.GoType }}
     {{- end }}
 {{- end }}
 
-{{ range $schemaName, $schema := .Components.Schemas }}
+// Components
+
+{{ range $schemaName, $schema := .components }}
     {{- template "componentSchema" (dict "schemaName" $schemaName "schema" $schema ) }}
 {{ end }}
+
+// Types derived from `object` properties
+{{ range $, $schema := .specialTypes }}
+    {{- template "componentSchema" (dict "schemaName" $schema.GoType "schema" $schema ) }}
+{{ end -}}
+
+// Types derived from user defined `format`
+{{ range $, $typeName := .customTypes }}
+    var _ json.Unmarshaler = (*{{ $typeName }})(nil)
+{{ end -}}

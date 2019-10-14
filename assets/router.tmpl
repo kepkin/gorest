@@ -1,5 +1,7 @@
 {{ $prefix := (MakeIdentifier .Info.Title) }}
 
+// Router
+
 func RegisterRoutes(r *gin.Engine, api {{ $prefix }}) {
   e := &{{ $prefix }}Server{api}
 
