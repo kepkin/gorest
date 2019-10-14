@@ -110,10 +110,51 @@ type schemaType struct {
 	Items                *schemaType
 	Ref                  string `yaml:"$ref"`
 
+	//Title       string
+	//Description string
+	//// TODO(a.telyshev) Enum
+	//// TODO(a.telyshev) Default
+	//Format string
+	//Type   string
+	//
+	//Ref string `yaml:"$ref"`
+
+	//arraySchema
+	//stringSchema
+	//numberSchema
+	//objectSchema
+
 	Name           string
 	GoType         string
 	HasCustomType  bool
 	HasSpecialType bool
+}
+
+type arraySchema struct {
+	Items       *schemaType
+	MaxItems    int
+	MinItems    int
+	UniqueItems bool
+}
+
+type stringSchema struct {
+	Pattern   string
+	MaxLength int
+	MinLength int
+}
+
+type numberSchema struct {
+	Maximum          float64
+	ExclusiveMaximum bool
+	Minimum          float64
+	ExclusiveMinimum bool
+	MultipleOf       float64
+}
+
+type objectSchema struct {
+	Required             bool
+	Properties           propertiesType
+	AdditionalProperties *schemaType `yaml:"additionalProperties"`
 }
 
 type propertiesType map[propertyName]*schemaType

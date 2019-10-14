@@ -24,28 +24,6 @@ func processSpec(spec *spec) (meta specMeta, err error) {
 		return
 	}
 
-	processPath := func(p *pathSpec) error {
-		if p == nil {
-			return nil
-		}
-
-		for _, param := range p.Parameters {
-			if err = determineTypes(nil, param.Schema); err != nil {
-				return err
-			}
-		}
-
-		if p.RequestBody != nil {
-			for _, content := range p.RequestBody.Content {
-				// TODO(a.telyshev): Not only `ref` support
-				if err = determineTypes(nil, content.Schema); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	}
-
 	for _, path := range spec.Paths {
 		if err = processPath(path.Delete); err != nil {
 			return
@@ -83,6 +61,28 @@ func processSpec(spec *spec) (meta specMeta, err error) {
 		meta.SpecialTypes = append(meta.SpecialTypes, *schema)
 	}
 	return
+}
+
+func processPath(p *pathSpec) error {
+	if p == nil {
+		return nil
+	}
+
+	for _, param := range p.Parameters {
+		if err := determineTypes(nil, param.Schema); err != nil {
+			return err
+		}
+	}
+
+	if p.RequestBody != nil {
+		for _, content := range p.RequestBody.Content {
+			// TODO(a.telyshev): Not only `ref` support
+			if err := determineTypes(nil, content.Schema); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func determineTypes(path []string, schema *schemaType) error {

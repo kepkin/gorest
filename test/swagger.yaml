@@ -58,14 +58,3 @@ components:
 
         meta:
           type: object
-
-        kek:
-          type: object
-          properties:
-            name:
-              type: string
-            lel:
-              type: object
-              properties:
-                kuk:
-                  type: string
