@@ -11,6 +11,31 @@ servers:
     description: Develop
 
 paths:
+  /v1/example/:year/:user:
+    get:
+      operationId: Example
+
+      parameters:
+        - name: year
+          in: path
+          schema:
+            type: integer
+            format: int64
+
+        - name: user
+          in: path
+          schema:
+            type: object
+            properties:
+              role:
+                type: string
+              firstName:
+                type: string
+
+      responses:
+        '200':
+          description: OK
+
   /v1/payment:
     get:
       operationId: GetPayment
