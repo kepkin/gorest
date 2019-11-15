@@ -1,14 +1,16 @@
 package gorest_test
 
 import (
-	"github.com/kepkin/gorest"
 	"log"
+	"testing"
+
+	"github.com/kepkin/gorest"
 )
 
-func ExampleGenerate() {
-	err := gorest.Generate("../assets/swagger.yaml", gorest.Options{
+func TestExampleGenerate(t *testing.T) {
+	err := gorest.Generate("test/swagger.yaml", gorest.Options{
 		PackageName: "api",
-		TargetFile:  "gingen.go",
+		TargetFile:  "__gingen.go",
 	})
 	if err != nil {
 		log.Fatal(err)

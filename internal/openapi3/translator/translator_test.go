@@ -48,10 +48,10 @@ func TestProcessRootSchema(t *testing.T) {
 		},
 		InterfaceCheckerDef{
 			TypeName:      "Decimal",
-			InterfaceName: "json.Marshaller",
+			InterfaceName: "json.Marshaler",
 		},
 		TypeDef{
-			Name:   "PaymentMeta",
+			Name: "PaymentMeta",
 		},
 	}, defs)
 }

@@ -15,11 +15,15 @@ type PaymentGatewayAPIImpl struct {
 	ProvidedSumTotal int64
 }
 
-func (p *PaymentGatewayAPIImpl) GetPayment(in GetPaymentReq, c *gin.Context) {
+func (p *PaymentGatewayAPIImpl) GetPayment(in GetPaymentRequest, c *gin.Context) {
 	panic("implement me")
 }
 
-func (p PaymentGatewayAPIImpl) ProvidePayment(in ProvidePaymentReq, c *gin.Context) {
-	p.ProvidedSumTotal += in.Body.Sum.IntPart()
+func (p PaymentGatewayAPIImpl) ProvidePayment(in ProvidePaymentRequest, c *gin.Context) {
+	p.ProvidedSumTotal += in.JSONBody.Sum.IntPart()
 	c.AbortWithStatus(http.StatusOK)
+}
+
+func (p *PaymentGatewayAPIImpl) Example(in ExampleRequest, c *gin.Context) {
+	panic("implement me")
 }

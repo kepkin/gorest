@@ -6,7 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 
-	"github.com/kepkin/gorest/internal/openapi3/barber"
+	"github.com/kepkin/gorest/internal/barber"
 	"github.com/kepkin/gorest/internal/openapi3/generator"
 	"github.com/kepkin/gorest/internal/openapi3/spec"
 )
@@ -22,30 +22,27 @@ func GenerateFromFile(swaggerPath string, packageName string, wr io.Writer) erro
 		return err
 	}
 
-	return generateFromSpec(sp, packageName, wr)
+	return generateFromSpec(wr, packageName, sp)
 }
 
-func generateFromSpec(sp spec.Spec, packageName string, wr io.Writer) error {
+func generateFromSpec(wr io.Writer, packageName string, sp spec.Spec) error {
 	var content bytes.Buffer
 
 	if _, err := fmt.Fprintf(&content, generator.Predefined, packageName); err != nil {
 		return err
 	}
 
-	if err := generator.MakeInterface(&content, sp); err != nil {
-		return err
+	for _, gen := range []func(io.Writer, spec.Spec) error{
+		generator.MakeInterface,
+		generator.MakeHandlers,
+		generator.MakeRequests,
+		generator.MakeComponents,
+		generator.MakeRouter,
+	} {
+		if err := gen(&content, sp); err != nil {
+			return err
+		}
 	}
 
-	if err := generator.MakeHandlers(&content, sp); err != nil {
-		return err
-	}
-
-	if err := generator.MakeRouter(&content, sp); err != nil {
-		return err
-	}
-
-	if err := barber.PrettifySource(&content, wr); err != nil {
-		return err
-	}
-	return nil
+	return barber.PrettifySource(&content, wr)
 }

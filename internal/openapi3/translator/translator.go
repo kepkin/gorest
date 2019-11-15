@@ -10,15 +10,6 @@ import (
 	"github.com/kepkin/gorest/internal/openapi3/spec"
 )
 
-type ParameterPlace int
-
-const (
-	Path ParameterPlace = iota
-	Query
-	Header
-	Cookie
-)
-
 type TypeDef struct {
 	Name   string
 	Type   string
@@ -112,8 +103,12 @@ func processObjSchema(schema spec.SchemaType, queue *list.List) (def TypeDef, er
 		propID := MakeIdentifier(propName)
 		propSchema.Name = propID
 
+		if schema.Place != "" {
+			propSchema.Place = schema.Place
+		}
+
 		var field interface{}
-		field, err = determineType(def.Name, schema.Level, *propSchema, propName, schema.Place, queue)
+		field, err = determineType(def.Name, schema.Level, *propSchema, propName, queue)
 		if err != nil {
 			return
 		}
@@ -122,7 +117,7 @@ func processObjSchema(schema spec.SchemaType, queue *list.List) (def TypeDef, er
 	return
 }
 
-func determineType(parentName string, currentLevel int, schema spec.SchemaType, parameter string, place string, queue *list.List) (interface{}, error) {
+func determineType(parentName string, currentLevel int, schema spec.SchemaType, parameter string, queue *list.List) (interface{}, error) {
 	if schema.Ref != "" {
 		return StructField{Field{
 			Name:      schema.Name,
@@ -135,7 +130,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 	switch schema.Type {
 	case spec.ArrayType:
 		childName := parentName + MakeTitledIdentifier(schema.Name)
-		t, err := determineType(childName, currentLevel+1, *schema.Items, parameter, place, queue)
+		t, err := determineType(childName, currentLevel+1, *schema.Items, parameter, queue)
 		if err != nil {
 			return "", err
 		}
@@ -144,7 +139,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 			Parameter: parameter,
 			Type:      "[]" + t.(Field).Name,
 			Level:     currentLevel,
-			Place:     place,
+			Place:     schema.Place,
 		}}, nil
 
 	case spec.BooleanType:
@@ -153,7 +148,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 			Parameter: parameter,
 			Type:      "bool",
 			Level:     currentLevel,
-			Place:     place,
+			Place:     schema.Place,
 		}}, nil
 
 	case spec.IntegerType:
@@ -177,7 +172,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 			type_ = MakeTitledIdentifier(schema.Format)
 			queue.PushBack(InterfaceCheckerDef{
 				TypeName:      type_,
-				InterfaceName: "json.Marshaller",
+				InterfaceName: "json.Marshaler",
 			})
 			fmt.Printf("please implement own integer type `%s`\n", type_)
 		}
@@ -187,7 +182,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 				Parameter: parameter,
 				Type:      type_,
 				Level:     currentLevel,
-				Place:     place,
+				Place:     schema.Place,
 			},
 			BitSize: bitSize,
 		}, nil
@@ -211,7 +206,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 			type_ = MakeTitledIdentifier(schema.Format)
 			queue.PushBack(InterfaceCheckerDef{
 				TypeName:      type_,
-				InterfaceName: "json.Marshaller",
+				InterfaceName: "json.Marshaler",
 			})
 			fmt.Printf("please implement own number type `%s`\n", type_)
 		}
@@ -221,7 +216,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 				Parameter: parameter,
 				Type:      type_,
 				Level:     currentLevel,
-				Place:     place,
+				Place:     schema.Place,
 			},
 			BitSize: bitSize,
 		}, nil
@@ -238,7 +233,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 			Name:  name,
 			Type:  type_,
 			Level: currentLevel,
-			Place: place,
+			Place: schema.Place,
 		}}, nil
 
 	case spec.StringType:
@@ -248,7 +243,7 @@ func determineType(parentName string, currentLevel int, schema spec.SchemaType, 
 				Name:      schema.Name,
 				Parameter: parameter,
 				Level:     currentLevel,
-				Place:     place,
+				Place:     schema.Place,
 			},
 			Format: schema.Format,
 		}, nil

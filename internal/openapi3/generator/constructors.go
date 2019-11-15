@@ -12,15 +12,20 @@ import (
 var constructorTemplate = template.Must(template.New("constructor").Funcs(template.FuncMap{
 	"MakeFieldConstructor": makeFieldConstructor,
 }).Parse(`
-func Make{{ .Name }}(ctx *gin.Context) (result {{ .Name }}, errors []FieldError) {
+func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
+	{{- with .Fields }}	
+		var err error
+		_ = err
+	{{ end -}}
 	{{- range $, $field := .Fields }}
 		{{- MakeFieldConstructor $field }}
 	{{ end -}}
 	return
-}`))
+}
+`))
 
 var intFieldConstructorTemplate = template.Must(template.New("intFieldConstructor").Parse(`
-	result.{{ .Name }}, err = strconv.ParseInt(ExtractParameter(ctx, "{{ .Parameter }}", {{ .Place }}), 10, {{ .BitSize }})
+	result.{{ .Name }}, err = strconv.ParseInt(ExtractParameter(c, "{{ .Parameter }}", {{ .Place }}), 10, {{ .BitSize }})
 	if err != nil {
 		errors = append(errors, FieldError{
 			Field:   "{{ .Parameter }}",
@@ -34,17 +39,20 @@ var intFieldConstructorTemplate = template.Must(template.New("intFieldConstructo
 	}`))
 
 var stringFieldConstructorTemplate = template.Must(template.New("stringFieldConstructor").Parse(`
-	result.{{ .Name }} = ExtractParameter(ctx, "{{ .Parameter }}", {{ .Place }})`))
+	result.{{ .Name }} = ExtractParameter(c, "{{ .Parameter }}", {{ .Place }})`))
 
-var structFieldConstructorTemplate = template.Must(template.New("structFieldConstructor").Parse(`
+var structFieldConstructorTemplate = template.Must(template.New("structFieldConstructor").Funcs(template.FuncMap{
+	"ToLower": strings.ToLower,
+}).Parse(`
 	{{- if lt .Level 2 }}
-	result.{{ .Name }}, nestedErrors = Make{{ .Type }}(ctx)
+		{{ .Name | ToLower }}, nestedErrors := Make{{ .Type }}(c)
 	{{- else }}
-	result.{{ .Name }}, nestedErrors = Make{{ .Type }}(ExtractParameter(ctx, "{{ .Parameter }}", {{ .Place }}))
+		{{ .Name | ToLower }}, nestedErrors := Make{{ .Type }}(ExtractParameter(c, "{{ .Parameter }}", {{ .Place }}))
 	{{- end }}
 	if nestedErrors != nil {
-		errors = append(errors, nestedErrors)
-	}`))
+		errors = append(errors, nestedErrors...)
+	}
+	result.{{ .Name }} = {{ .Name | ToLower }}`))
 
 func MakeConstructor(wr io.Writer, def translator.TypeDef) error {
 	return constructorTemplate.Execute(wr, def)

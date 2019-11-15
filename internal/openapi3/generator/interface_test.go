@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/kepkin/gorest/internal/openapi3/barber"
+	"github.com/kepkin/gorest/internal/barber"
 	"github.com/kepkin/gorest/internal/openapi3/spec"
 )
 
@@ -47,9 +47,10 @@ paths:
 	if !assert.NoError(t, MakeInterface(b, sp)) {
 		return
 	}
+	result := strings.NewReader("package api\n" + b.String())
 
-	result, err := barber.PrettifySource("package api\n" + b.String())
-	if !assert.NoError(t, err) {
+	prettyResult := new(strings.Builder)
+	if !assert.NoError(t, barber.PrettifySource(result, prettyResult)) {
 		return
 	}
 
@@ -75,5 +76,5 @@ type TestAPI interface {
 type TestAPIServer struct {
 	Srv TestAPI
 }
-`, result)
+`, prettyResult.String())
 }

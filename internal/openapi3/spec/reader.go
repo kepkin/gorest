@@ -44,11 +44,11 @@ type ServerType struct {
 
 // Paths
 
-type PathMap map[Path]pathType
+type PathMap map[Path]PathType
 
 type Path = string
 
-type pathType struct {
+type PathType struct {
 	Get     *PathSpec
 	Post    *PathSpec
 	Patch   *PathSpec
@@ -57,7 +57,7 @@ type pathType struct {
 	Options *PathSpec
 }
 
-func (p pathType) Methods() []*PathSpec {
+func (p PathType) Methods() []*PathSpec {
 	return []*PathSpec{p.Get, p.Post, p.Patch, p.Delete, p.Put, p.Options}
 }
 
