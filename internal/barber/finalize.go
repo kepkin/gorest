@@ -20,8 +20,8 @@ func PrettifySource(src io.Reader, dst io.Writer) error {
 		f, _ := ioutil.ReadAll(src)
 
 		var res strings.Builder
-		for i, codeLine := range strings.Split(string(f), "\n") {
-			res.WriteString(fmt.Sprintf("%d %s\n", i, codeLine))
+		for i, codeLine := range strings.Split(string(f), "\n") { // TODO(a.telyshev): bufio.Scanner()
+			res.WriteString(fmt.Sprintf("%-6d %s\n", i, codeLine))
 		}
 
 		var errBuf bytes.Buffer

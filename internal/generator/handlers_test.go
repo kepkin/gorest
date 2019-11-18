@@ -3,7 +3,8 @@ package generator
 import (
 	"testing"
 
-	"github.com/kepkin/gorest/internal/openapi3/spec"
+	"github.com/kepkin/gorest/internal/spec/openapi3"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -42,9 +43,9 @@ paths:
 `
 
 func TestMakeHandler(t *testing.T) {
-	_, err := spec.Read([]byte(pathSpecYaml))
+	_, err := openapi3.ReadSpec([]byte(pathSpecYaml))
 	assert.NoError(t, err)
 
 	//assert.NoError(t,
-	//	MakeHandlers(*spec.Paths["/api/v1/resource"].Post))
+	//	makeHandlers(*spec.Paths["/api/v1/resource"].Post))
 }

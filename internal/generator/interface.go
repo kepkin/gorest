@@ -4,10 +4,11 @@ import (
 	"html/template"
 	"io"
 
+	"github.com/kepkin/gorest/internal/spec/openapi3"
+
 	"github.com/Masterminds/sprig"
 
-	"github.com/kepkin/gorest/internal/openapi3/spec"
-	"github.com/kepkin/gorest/internal/openapi3/translator"
+	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
 var interfaceTemplate = template.Must(template.New("interfaceTmpl").Funcs(sprig.GenericFuncMap()).Parse(`
@@ -23,7 +24,10 @@ type {{ .InterfaceName }} interface {
 				{{ template "interfaceMethod" $method }}
             {{- end }}
         {{- end }}
-	{{ end -}}
+	{{ end }}
+	// Service methods
+	ProcessMakeRequestErrors(errors []FieldError)
+	ProcessValidateErrors(errors []FieldError)
 }
 
 type {{ .InterfaceName }}Server struct {
@@ -31,11 +35,11 @@ type {{ .InterfaceName }}Server struct {
 }
 `))
 
-func MakeInterface(wr io.Writer, sp spec.Spec) error {
+func (Generator) makeInterface(wr io.Writer, sp openapi3.Spec) error {
 	// TODO(a.telyshev): Check not null and uniq OperationId
 	return interfaceTemplate.Execute(wr, struct {
 		InterfaceName string
-		Paths         spec.PathMap
+		Paths         openapi3.PathMap
 	}{
 		InterfaceName: translator.MakeIdentifier(sp.Info.Title),
 		Paths:         sp.Paths,

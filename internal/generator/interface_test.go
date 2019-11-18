@@ -4,10 +4,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kepkin/gorest/internal/spec/openapi3"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/kepkin/gorest/internal/barber"
-	"github.com/kepkin/gorest/internal/openapi3/spec"
 )
 
 func TestMakeInterface(t *testing.T) {
@@ -38,13 +39,13 @@ paths:
        operationId: CreateAdmin
 `
 
-	sp, err := spec.Read([]byte(swaggerExample))
+	sp, err := openapi3.ReadSpec([]byte(swaggerExample))
 	if !assert.NoError(t, err) {
 		return
 	}
 
 	b := new(strings.Builder)
-	if !assert.NoError(t, MakeInterface(b, sp)) {
+	if !assert.NoError(t, NewGenerator("api").makeInterface(b, sp)) {
 		return
 	}
 	result := strings.NewReader("package api\n" + b.String())
@@ -71,6 +72,10 @@ type TestAPI interface {
 	CheckUser(in CheckUserRequest, c *gin.Context)
 	// PATCH /api/v2/user
 	UpdateUser(in UpdateUserRequest, c *gin.Context)
+
+	// Service methods
+	ProcessMakeRequestErrors(errors []FieldError)
+	ProcessValidateErrors(errors []FieldError)
 }
 
 type TestAPIServer struct {

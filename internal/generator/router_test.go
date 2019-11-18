@@ -3,7 +3,8 @@ package generator
 import (
 	"testing"
 
-	"github.com/kepkin/gorest/internal/openapi3/spec"
+	"github.com/kepkin/gorest/internal/spec/openapi3"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,13 +36,13 @@ paths:
        operationId: CreateAdmin
 `
 
-	_, err := spec.Read([]byte(swaggerExample))
+	_, err := openapi3.ReadSpec([]byte(swaggerExample))
 	if !assert.NoError(t, err) {
 		return
 	}
 	//
 	//	b := new(strings.Builder)
-	//	if !assert.NoError(t, MakeRouter(b, sp)) {
+	//	if !assert.NoError(t, makeRouter(b, sp)) {
 	//		return
 	//	}
 	//

@@ -8,7 +8,7 @@ import (
 )
 
 func TestExampleGenerate(t *testing.T) {
-	err := gorest.Generate("test/swagger.yaml", gorest.Options{
+	err := gorest.Generate("test/swagger_wallet.yaml", gorest.Options{
 		PackageName: "api",
 		TargetFile:  "__gingen.go",
 	})

@@ -4,7 +4,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/kepkin/gorest/internal/openapi3/translator"
+	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
 var validateTemplate = template.Must(template.New("validate").Parse(`
@@ -13,6 +13,6 @@ func (t {{ .Name }}) Validate() []FieldError {
 }
 `))
 
-func MakeValidateFunc(wr io.Writer, def translator.TypeDef) error {
+func makeValidateFunc(wr io.Writer, def translator.TypeDef) error {
 	return validateTemplate.Execute(wr, def)
 }

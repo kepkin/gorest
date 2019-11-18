@@ -1,4 +1,4 @@
-package spec
+package openapi3
 
 import "gopkg.in/yaml.v2"
 
@@ -19,7 +19,7 @@ const (
 	NumberDouble = "double"
 )
 
-func Read(in []byte) (res Spec, err error) {
+func ReadSpec(in []byte) (res Spec, err error) {
 	err = yaml.Unmarshal(in, &res)
 	return
 }
@@ -112,8 +112,9 @@ type SchemaType struct {
 	Description string
 	// TODO(a.telyshev) Enum
 	// TODO(a.telyshev) Default
-	Format string
-	Type   string
+	Format     string
+	Type       string
+	IsNullable bool `yaml:"nullable"`
 
 	Ref string `yaml:"$ref"`
 
@@ -123,10 +124,7 @@ type SchemaType struct {
 	ObjectSchema `yaml:",inline"`
 
 	// Service fields
-
-	Name  string
-	Level int
-	Place string
+	Name string
 }
 
 type ArraySchema struct {
@@ -148,10 +146,13 @@ type NumberSchema struct {
 	Minimum          float64
 	ExclusiveMinimum bool
 	MultipleOf       float64
+
+	// Service fields
+	BitSize int
 }
 
 type ObjectSchema struct {
-	Required             bool
+	Required             []PropertyName
 	Properties           PropertiesType
 	AdditionalProperties *SchemaType `yaml:"additionalProperties"`
 }
@@ -160,13 +161,11 @@ type PropertiesType map[PropertyName]*SchemaType
 
 type PropertyName = string
 
-func NewObjectSchema(name string, level int, place string) SchemaType {
+func NewObjectSchema(name string) SchemaType {
 	return SchemaType{
 		Type:         ObjectType,
 		ObjectSchema: ObjectSchema{Properties: make(PropertiesType)},
 
-		Name:  name,
-		Level: level,
-		Place: place,
+		Name: name,
 	}
 }

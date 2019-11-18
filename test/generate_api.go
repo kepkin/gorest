@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	err := gorest.Generate("swagger.yaml", gorest.Options{
+	err := gorest.Generate("swagger_wallet.yaml", gorest.Options{
 		PackageName: "api",
-		TargetFile:  "api/gingen.go",
+		TargetFile:  "api/api_gorest_w1.go",
 	})
 	if err != nil {
 		log.Fatal(err)
