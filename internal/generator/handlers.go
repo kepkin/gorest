@@ -102,7 +102,7 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 
 	// Make structs
 	for _, d := range defs {
-		if err := g.makeStruct(wr, d); err != nil {
+		if err := g.makeStruct(wr, d, false); err != nil {
 			return s{}, err
 		}
 

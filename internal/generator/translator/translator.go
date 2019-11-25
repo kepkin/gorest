@@ -216,9 +216,10 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			(schema.AdditionalProperties == nil || len(schema.AdditionalProperties.Properties) == 0) {
 
 			return Field{
-				Type:   FreeFormObject,
-				Name:   schema.Name,
-				GoType: "json.RawMessage",
+				Type:      FreeFormObject,
+				Parameter: parameter,
+				Name:      schema.Name,
+				GoType:    "json.RawMessage",
 			}, nil
 		}
 

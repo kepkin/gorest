@@ -13,7 +13,7 @@ func (g *Generator) makeComponents(wr io.Writer, sp openapi3.Spec) error {
 		schema.Name = name
 		defs, _ := translator.ProcessRootSchema(*schema)
 		for _, d := range defs {
-			if err := g.makeStruct(wr, d); err != nil {
+			if err := g.makeStruct(wr, d, true); err != nil {
 				return err
 			}
 		}

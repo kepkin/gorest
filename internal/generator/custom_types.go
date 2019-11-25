@@ -8,6 +8,7 @@ import (
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
+// TODO(a.telyshev): Test me
 func (g Generator) makeInterfaceCheckers(wr io.Writer, _ openapi3.Spec) error {
 	if len(g.customFields) > 0 {
 		if _, err := fmt.Fprintln(wr, `
