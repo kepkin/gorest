@@ -2,13 +2,15 @@ package openapi3
 
 import "gopkg.in/yaml.v2"
 
+type Type string
+
 const (
-	ArrayType   = "array"
-	BooleanType = "boolean"
-	IntegerType = "integer"
-	NumberType  = "number"
-	ObjectType  = "object"
-	StringType  = "string"
+	ArrayType   Type = "array"
+	BooleanType      = "boolean"
+	IntegerType      = "integer"
+	NumberType       = "number"
+	ObjectType       = "object"
+	StringType       = "string"
 )
 
 const (
@@ -113,7 +115,7 @@ type SchemaType struct {
 	// TODO(a.telyshev) Enum
 	// TODO(a.telyshev) Default
 	Format     string
-	Type       string
+	Type       Type
 	IsNullable bool `yaml:"nullable"`
 
 	Ref string `yaml:"$ref"`

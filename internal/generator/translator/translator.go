@@ -10,6 +10,13 @@ import (
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
+var specToGoTypes = map[openapi3.Type]string{
+	openapi3.BooleanType: "bool",
+	openapi3.IntegerType: "int64",
+	openapi3.NumberType:  "float64",
+	openapi3.StringType:  "string",
+}
+
 type FieldType int
 
 const (
@@ -100,12 +107,21 @@ func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
 
 func ProcessObjSchema(schema openapi3.SchemaType, queue *list.List) (def TypeDef, err error) {
 	if schema.Type != openapi3.ObjectType {
-		err = fmt.Errorf("schema must be `object`, got: %s", schema.Type)
+		// TODO(a.telyshev): More complex processing
+		// err = fmt.Errorf("schema must be `object`, got: `%s`", schema.Type)
+		def.Name = MakeIdentifier(schema.Name)
+
+		goType, ok := specToGoTypes[schema.Type]
+		if !ok {
+			err = fmt.Errorf("unsupported type: %s", schema.Type)
+			return
+		}
+		def.GoType = goType
 		return
 	}
 
 	def.Name = MakeIdentifier(schema.Name)
-	def.GoType = "struct" // For debug usage only
+	def.GoType = "struct"
 
 	for propName, propSchema := range schema.Properties {
 		propID := MakeIdentifier(propName)
@@ -244,7 +260,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		}, nil
 
 	default:
-		return Field{}, fmt.Errorf("unknown data type: %v", schema.Type)
+		return Field{}, fmt.Errorf("%s.%s: unknown data type: %v", parentName, parameter, schema.Type)
 	}
 }
 

@@ -56,6 +56,6 @@ func TestProcessRootSchema(t *testing.T) {
 		{Parameter: "payment_id", Name: "PaymentID", GoType: "string", Type: StringField},
 		{Parameter: "merchant_id", Name: "MerchantID", GoType: "int64", Type: IntegerField},
 		{Parameter: "sum", Name: "Sum", GoType: "Decimal", Type: CustomField},
-		{Parameter: "", Name: "Meta", GoType: "json.RawMessage", Type: FreeFormObject},
+		{Parameter: "meta", Name: "Meta", GoType: "json.RawMessage", Type: FreeFormObject},
 	})
 }

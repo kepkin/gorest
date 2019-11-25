@@ -11,7 +11,10 @@ func (g *Generator) makeComponents(wr io.Writer, sp openapi3.Spec) error {
 
 	for name, schema := range sp.Components.Schemas {
 		schema.Name = name
-		defs, _ := translator.ProcessRootSchema(*schema)
+		defs, err := translator.ProcessRootSchema(*schema)
+		if err != nil {
+			return err
+		}
 		for _, d := range defs {
 			if err := g.makeStruct(wr, d, true); err != nil {
 				return err

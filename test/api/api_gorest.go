@@ -86,8 +86,8 @@ func (t ExampleRequestPath) Validate() []FieldError {
 }
 
 type ExampleRequestPathUser struct {
-	FirstName string
 	Role      string
+	FirstName string
 }
 
 func (t ExampleRequestPathUser) Validate() []FieldError {
@@ -248,11 +248,13 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 }
 
 type Payment struct {
-	PaymentID  string          `json:"payment_id"`
+	PaymentID  ID              `json:"payment_id"`
 	MerchantID string          `json:"merchant_id"`
 	Sum        Decimal         `json:"sum"`
 	Meta       json.RawMessage `json:"meta"`
 }
+
+type ID string
 
 // Custom types
 

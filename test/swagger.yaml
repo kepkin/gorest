@@ -72,7 +72,7 @@ components:
       type: object
       properties:
         payment_id:
-          type: string
+          $ref: '#/components/schemas/ID'
 
         merchant_id:
           type: string
@@ -83,3 +83,7 @@ components:
 
         meta:
           type: object
+
+    ID:
+      type:
+        string
