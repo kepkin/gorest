@@ -50,12 +50,14 @@ func TestProcessRootSchema(t *testing.T) {
 	}
 	def := defs[0]
 
-	assert.Equal(t, "Payment", def.Name)
-	assert.Equal(t, "struct", def.GoType)
-	assert.ElementsMatch(t, def.Fields, []Field{
-		{Parameter: "payment_id", Name: "PaymentID", GoType: "string", Type: StringField},
-		{Parameter: "merchant_id", Name: "MerchantID", GoType: "int64", Type: IntegerField},
-		{Parameter: "sum", Name: "Sum", GoType: "Decimal", Type: CustomField},
-		{Parameter: "meta", Name: "Meta", GoType: "json.RawMessage", Type: FreeFormObject},
-	})
+	assert.Equal(t, TypeDef{
+		Name:   "Payment",
+		GoType: "struct",
+		Fields: []Field{
+			{Parameter: "merchant_id", Name: "MerchantID", GoType: "int64", Type: IntegerField},
+			{Parameter: "meta", Name: "Meta", GoType: "json.RawMessage", Type: FreeFormObject},
+			{Parameter: "payment_id", Name: "PaymentID", GoType: "string", Type: StringField},
+			{Parameter: "sum", Name: "Sum", GoType: "Decimal", Type: CustomField},
+		},
+	}, def)
 }

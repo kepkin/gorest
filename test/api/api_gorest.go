@@ -70,8 +70,8 @@ type PaymentGatewayAPIServer struct {
 // _PaymentGatewayAPI_Example_Handler
 
 type ExampleRequest struct {
-	Query ExampleRequestQuery
 	Path  ExampleRequestPath
+	Query ExampleRequestQuery
 }
 
 func (t ExampleRequest) Validate() []FieldError {
@@ -79,8 +79,8 @@ func (t ExampleRequest) Validate() []FieldError {
 }
 
 type ExampleRequestPath struct {
-	Year int64
 	User ExampleRequestPathUser
+	Year int64
 }
 
 func (t ExampleRequestPath) Validate() []FieldError {
@@ -105,12 +105,12 @@ func (t ExampleRequestQuery) Validate() []FieldError {
 }
 
 func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldError) {
-	result.Query, errors = MakeExampleRequestQuery(c)
+	result.Path, errors = MakeExampleRequestPath(c)
 	if errors != nil {
 		return
 	}
 
-	result.Path, errors = MakeExampleRequestPath(c)
+	result.Query, errors = MakeExampleRequestQuery(c)
 	if errors != nil {
 		return
 	}
@@ -125,7 +125,6 @@ func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors [
 	if err != nil {
 		errors = append(errors, NewFieldError(InPath, "year", "can't parse as 64 bit integer", err))
 	}
-
 	return
 }
 
@@ -274,9 +273,9 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 }
 
 type Payment struct {
+	MerchantID string          `json:"merchant_id"`
 	Meta       json.RawMessage `json:"meta"`
 	PaymentID  ID              `json:"payment_id"`
-	MerchantID string          `json:"merchant_id"`
 	Sum        Decimal         `json:"sum"`
 }
 

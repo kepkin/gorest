@@ -3,6 +3,7 @@ package translator
 import (
 	"container/list"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/iancoleman/strcase"
@@ -140,6 +141,9 @@ func ProcessObjSchema(schema openapi3.SchemaType, queue *list.List) (def TypeDef
 		}
 		def.Fields = append(def.Fields, field)
 	}
+	sort.Slice(def.Fields, func(i, j int) bool {
+		return def.Fields[i].Name < def.Fields[j].Name
+	})
 	return
 }
 
