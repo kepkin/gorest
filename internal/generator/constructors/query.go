@@ -13,8 +13,9 @@ func MakeQueryParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 }
 
 var queryParamsConstructorTemplate = template.Must(template.New("queryParamsConstructor").Funcs(template.FuncMap{
-	"IntConstructor":   makeIntConstructor,
-	"FloatConstructor": makeFloatConstructor,
+	"CustomFieldConstructor": makeCustomFieldConstructor,
+	"IntConstructor":         makeIntFieldConstructor,
+	"FloatConstructor":       makeFloatFieldConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
@@ -26,6 +27,11 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		
 		{{- if .IsString }}
 			result.{{ .Name }}, _ = c.GetQuery("{{ .Parameter }}")
+		{{- end }}
+
+		{{- if .IsCustom }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ CustomFieldConstructor . "InQuery" }}
 		{{- end }}
 
 		{{- if .IsInteger }}

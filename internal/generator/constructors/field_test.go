@@ -11,14 +11,14 @@ import (
 
 func TestMakeIntConstructor(t *testing.T) {
 	t.Run("No int field", func(t *testing.T) {
-		_, err := makeIntConstructor(translator.Field{
+		_, err := makeIntFieldConstructor(translator.Field{
 			Type: translator.IntegerField + 1,
 		}, "InQuery")
 		assert.Error(t, err)
 	})
 
 	t.Run("No bit size", func(t *testing.T) {
-		s, err := makeIntConstructor(translator.Field{
+		s, err := makeIntFieldConstructor(translator.Field{
 			Name:      "ID",
 			Parameter: "id",
 			Type:      translator.IntegerField,
@@ -33,7 +33,7 @@ if err != nil {
 	})
 
 	t.Run("32 bit field", func(t *testing.T) {
-		s, err := makeIntConstructor(translator.Field{
+		s, err := makeIntFieldConstructor(translator.Field{
 			Name:      "ID",
 			Parameter: "id",
 			Type:      translator.IntegerField,
@@ -49,7 +49,7 @@ if err != nil {
 	})
 
 	t.Run("64 bit field", func(t *testing.T) {
-		s, err := makeIntConstructor(translator.Field{
+		s, err := makeIntFieldConstructor(translator.Field{
 			Name:      "ID",
 			Parameter: "id",
 			Type:      translator.IntegerField,
@@ -67,14 +67,14 @@ if err != nil {
 
 func TestMakeFloatConstructor(t *testing.T) {
 	t.Run("No float field", func(t *testing.T) {
-		_, err := makeFloatConstructor(translator.Field{
+		_, err := makeFloatFieldConstructor(translator.Field{
 			Type: translator.FloatField + 1,
 		}, "InCookie")
 		assert.Error(t, err)
 	})
 
 	t.Run("No bit size", func(t *testing.T) {
-		s, err := makeFloatConstructor(translator.Field{
+		s, err := makeFloatFieldConstructor(translator.Field{
 			Name:      "Sum",
 			Parameter: "sum",
 			Type:      translator.FloatField,
@@ -89,7 +89,7 @@ if err != nil {
 	})
 
 	t.Run("32 bit field", func(t *testing.T) {
-		s, err := makeFloatConstructor(translator.Field{
+		s, err := makeFloatFieldConstructor(translator.Field{
 			Name:      "Sum",
 			Parameter: "sum",
 			Type:      translator.FloatField,
@@ -105,7 +105,7 @@ if err != nil {
 	})
 
 	t.Run("64 bit field", func(t *testing.T) {
-		s, err := makeFloatConstructor(translator.Field{
+		s, err := makeFloatFieldConstructor(translator.Field{
 			Name:      "Sum",
 			Parameter: "sum",
 			Type:      translator.FloatField,
@@ -117,6 +117,31 @@ if err != nil {
 		assert.Equal(t, `result.Sum, err = strconv.ParseFloat(sumStr, 10, 64)
 if err != nil {
 	errors = append(errors, NewFieldError(InQuery, "sum", "can't parse as 64 bit float", err))
+}`, s)
+	})
+}
+
+func TestMakeCustomFieldConstructor(t *testing.T) {
+	t.Run("No custom field", func(t *testing.T) {
+		_, err := makeCustomFieldConstructor(translator.Field{
+			Type: translator.CustomField + 1,
+		}, "InCookie")
+		assert.Error(t, err)
+	})
+
+	t.Run("Custom field example", func(t *testing.T) {
+		s, err := makeCustomFieldConstructor(translator.Field{
+			Name:      "Sum",
+			Parameter: "sum",
+			GoType:    "Decimal",
+			Type:      translator.CustomField,
+		}, "InQuery")
+		if !assert.NoError(t, err) {
+			return
+		}
+		assert.Equal(t, `result.Sum = Decimal{}
+if err = result.Sum.SetFromString(sumStr); err != nil {
+	errors = append(errors, NewFieldError(InQuery, "sum", fmt.Sprintf("can't create from string '%s'", sumStr), err))
 }`, s)
 	})
 }

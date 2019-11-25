@@ -13,8 +13,9 @@ func MakeHeaderParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 }
 
 var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(template.FuncMap{
-	"IntConstructor":   makeIntConstructor,
-	"FloatConstructor": makeFloatConstructor,
+	"CustomFieldConstructor": makeCustomFieldConstructor,
+	"IntConstructor":         makeIntFieldConstructor,
+	"FloatConstructor":       makeFloatFieldConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
@@ -26,6 +27,11 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		
 		{{- if .IsString }}
 			result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
+		{{- end }}
+
+		{{- if .IsCustom }}
+			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
+			{{ CustomFieldConstructor . "InHeader" }}
 		{{- end }}
 
 		{{- if .IsInteger }}

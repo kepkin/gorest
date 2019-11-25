@@ -3,7 +3,7 @@ gorest: install
 	go build ./cmd/gorest
 
 test: install
-	go test ./... -count=1
+	go test -count=1 ./...
 
 install:
 	go get -d ./...

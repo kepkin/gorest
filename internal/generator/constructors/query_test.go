@@ -17,6 +17,7 @@ func TestMakeQueryParamsConstructor(t *testing.T) {
 			{Name: "ID", GoType: "string", Parameter: "id", Type: translator.StringField},
 			{Name: "Size", GoType: "int64", Parameter: "size", Type: translator.IntegerField},
 			{Name: "Sum", GoType: "float64", Parameter: "sum", Type: translator.FloatField},
+			{Name: "User", GoType: "User", Parameter: "user", Type: translator.CustomField},
 		},
 	}
 
@@ -48,6 +49,12 @@ func MakeIncomeRequestQuery(c *gin.Context) (result IncomeRequestQuery, errors [
 	result.Sum, err = strconv.ParseFloat(sumStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InQuery, "sum", "can't parse as float", err))
+	}
+
+	userStr, _ := c.GetQuery("user")
+	result.User = User{}
+	if err = result.User.SetFromString(userStr); err != nil {
+		errors = append(errors, NewFieldError(InQuery, "user", fmt.Sprintf("can't create from string '%s'", userStr), err))
 	}
 	return
 }

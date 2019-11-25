@@ -16,6 +16,7 @@ func TestMakePathParamsConstructor(t *testing.T) {
 		Fields: []translator.Field{
 			{Name: "UserID", GoType: "int64", Parameter: "user_id", Type: translator.IntegerField},
 			{Name: "Role", GoType: "string", Parameter: "role", Type: translator.StringField},
+			{Name: "Time", GoType: "Timestamp", Parameter: "time", Type: translator.CustomField},
 		},
 	}
 
@@ -42,6 +43,12 @@ func MakeIncomeRequestPath(c *gin.Context) (result IncomeRequestPath, errors []F
 	}
 
 	result.Role, _ = c.Params.Get("role")
+
+	timeStr, _ := c.Params.Get("time")
+	result.Time = Timestamp{}
+	if err = result.Time.SetFromString(timeStr); err != nil {
+		errors = append(errors, NewFieldError(InPath, "time", fmt.Sprintf("can't create from string '%s'", timeStr), err))
+	}
 	return
 }
 `, prettyResult.String())

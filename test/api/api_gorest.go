@@ -4,6 +4,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -69,7 +70,8 @@ type PaymentGatewayAPIServer struct {
 // _PaymentGatewayAPI_Example_Handler
 
 type ExampleRequest struct {
-	Path ExampleRequestPath
+	Query ExampleRequestQuery
+	Path  ExampleRequestPath
 }
 
 func (t ExampleRequest) Validate() []FieldError {
@@ -86,15 +88,28 @@ func (t ExampleRequestPath) Validate() []FieldError {
 }
 
 type ExampleRequestPathUser struct {
-	Role      string
 	FirstName string
+	Role      string
 }
 
 func (t ExampleRequestPathUser) Validate() []FieldError {
 	return nil
 }
 
+type ExampleRequestQuery struct {
+	Sum Decimal
+}
+
+func (t ExampleRequestQuery) Validate() []FieldError {
+	return nil
+}
+
 func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldError) {
+	result.Query, errors = MakeExampleRequestQuery(c)
+	if errors != nil {
+		return
+	}
+
 	result.Path, errors = MakeExampleRequestPath(c)
 	if errors != nil {
 		return
@@ -111,6 +126,17 @@ func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors [
 		errors = append(errors, NewFieldError(InPath, "year", "can't parse as 64 bit integer", err))
 	}
 
+	return
+}
+
+func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors []FieldError) {
+	var err error
+
+	sumStr, _ := c.GetQuery("sum")
+	result.Sum = Decimal{}
+	if err = result.Sum.SetFromString(sumStr); err != nil {
+		errors = append(errors, NewFieldError(InQuery, "sum", fmt.Sprintf("can't create from string '%s'", sumStr), err))
+	}
 	return
 }
 
@@ -248,10 +274,10 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 }
 
 type Payment struct {
+	Meta       json.RawMessage `json:"meta"`
 	PaymentID  ID              `json:"payment_id"`
 	MerchantID string          `json:"merchant_id"`
 	Sum        Decimal         `json:"sum"`
-	Meta       json.RawMessage `json:"meta"`
 }
 
 type ID string

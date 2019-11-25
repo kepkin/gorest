@@ -13,8 +13,9 @@ func MakePathParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 }
 
 var pathParamsConstructorTemplate = template.Must(template.New("pathParamsConstructor").Funcs(template.FuncMap{
-	"IntConstructor":   makeIntConstructor,
-	"FloatConstructor": makeFloatConstructor,
+	"CustomFieldConstructor": makeCustomFieldConstructor,
+	"IntConstructor":         makeIntFieldConstructor,
+	"FloatConstructor":       makeFloatFieldConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
@@ -26,6 +27,11 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		
 		{{- if .IsString }}
 			result.{{ .Name }}, _ = c.Params.Get("{{ .Parameter }}")
+		{{- end }}
+
+		{{- if .IsCustom }}
+			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
+			{{ CustomFieldConstructor . "InPath" }}
 		{{- end }}
 
 		{{- if .IsInteger }}

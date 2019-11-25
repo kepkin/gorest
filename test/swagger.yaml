@@ -32,6 +32,12 @@ paths:
               firstName:
                 type: string
 
+        - name: sum
+          in: query
+          schema:
+            type: integer
+            format: decimal
+
       responses:
         '200':
           description: OK

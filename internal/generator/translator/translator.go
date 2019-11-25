@@ -272,8 +272,14 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 
 func MakeIdentifier(s string) string {
 	result := strcase.ToCamel(strings.ReplaceAll(s, " ", "_"))
-	if strings.HasSuffix(result, "Id") {
-		result = result[:len(result)-2] + "ID"
+
+	for _, suff := range [...]string{
+		"Id", "Url", "Http", "Json", "Inn",
+	} {
+		if strings.HasSuffix(result, suff) {
+			result = result[:len(result)-len(suff)] + strings.ToUpper(suff)
+			break
+		}
 	}
 	return result
 }
