@@ -34,6 +34,8 @@ func TestMakeCookieParamsConstructor(t *testing.T) {
 	assert.Equal(t, `package api
 
 func MakeIncomeRequestCookie(c *gin.Context) (result IncomeRequestCookie, errors []FieldError) {
+	var err error
+
 	getCookie := func(param string) (string, bool) {
 		cookie, err := c.Request.Cookie(param)
 		if err == http.ErrNoCookie {
@@ -44,7 +46,7 @@ func MakeIncomeRequestCookie(c *gin.Context) (result IncomeRequestCookie, errors
 
 	result.SessionID, _ = getCookie("sessionID")
 
-	maxAgeStr, _ = getCookie("Max-Age")
+	maxAgeStr, _ := getCookie("Max-Age")
 	result.MaxAge, err = strconv.ParseInt(maxAgeStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InCookie, "Max-Age", "can't parse as integer", err))

@@ -33,7 +33,9 @@ func TestMakePathParamsConstructor(t *testing.T) {
 	assert.Equal(t, `package api
 
 func MakeIncomeRequestPath(c *gin.Context) (result IncomeRequestPath, errors []FieldError) {
-	userIdStr, _ = c.Params.Get("user_id")
+	var err error
+
+	userIdStr, _ := c.Params.Get("user_id")
 	result.UserID, err = strconv.ParseInt(userIdStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InPath, "user_id", "can't parse as integer", err))

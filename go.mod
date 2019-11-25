@@ -13,12 +13,11 @@ require (
 	github.com/imdario/mergo v0.3.7 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.0
-	github.com/pkg/errors v0.8.0
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.3.0
 	github.com/ugorji/go v1.1.7 // indirect
-	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
+	golang.org/x/tools v0.0.0-20191125011157-cc15fab314e3
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )

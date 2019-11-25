@@ -34,15 +34,17 @@ func TestMakeQueryParamsConstructor(t *testing.T) {
 	assert.Equal(t, `package api
 
 func MakeIncomeRequestQuery(c *gin.Context) (result IncomeRequestQuery, errors []FieldError) {
+	var err error
+
 	result.ID, _ = c.GetQuery("id")
 
-	sizeStr, _ = c.GetQuery("size")
+	sizeStr, _ := c.GetQuery("size")
 	result.Size, err = strconv.ParseInt(sizeStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InQuery, "size", "can't parse as integer", err))
 	}
 
-	sumStr, _ = c.GetQuery("sum")
+	sumStr, _ := c.GetQuery("sum")
 	result.Sum, err = strconv.ParseFloat(sumStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InQuery, "sum", "can't parse as float", err))

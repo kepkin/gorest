@@ -15,7 +15,7 @@ import (
 
 func TestProvidePayment(t *testing.T) {
 	r := gin.New()
-	api.RegisterRoutes(r, new(api.PaymentGatewayAPIImpl))
+	api.RegisterRoutes(r, &api.PaymentGatewayAPIImpl{})
 
 	request := httptest.NewRequest(http.MethodPost, "/v1/payment", bytes.NewReader([]byte(`
 		{

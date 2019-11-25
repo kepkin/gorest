@@ -86,6 +86,11 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 				return request, fmt.Errorf("unsupported content type: %s", mimeType)
 			}
 		}
+		// TODO(a.telyshev): Dirty hack
+		body.Properties["Type"] = &openapi3.SchemaType{
+			Name: "Type",
+			Ref:  "#/components/schemas/ContentType",
+		}
 		request.Properties["Body"] = &body
 	}
 
@@ -108,8 +113,8 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		}
 	}
 
-	// Make constructors
-	if err := constructors.MakeRequestConstructor(wr, defs[0]); err != nil {
+	rootDef := defs[0]
+	if err := constructors.MakeRequestConstructor(wr, rootDef); err != nil {
 		return s{}, err
 	}
 	for params, constructor := range map[*openapi3.SchemaType]func(io.Writer, translator.TypeDef) error{

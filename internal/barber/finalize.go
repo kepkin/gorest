@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go/ast"
 	"go/format"
 	"go/parser"
 	"go/scanner"
@@ -11,6 +12,8 @@ import (
 	"io"
 	"io/ioutil"
 	"strings"
+
+	"golang.org/x/tools/go/ast/astutil"
 )
 
 func PrettifySource(src io.Reader, dst io.Writer) error {
@@ -30,8 +33,28 @@ func PrettifySource(src io.Reader, dst io.Writer) error {
 		return errors.New(errBuf.String() + "\nGENERATED FILE:\n" + res.String())
 	}
 
+	// TODO(a.telyshev): Save info about used imports in generator.Generator?
+	cleanUnusedImports(fset, file)
+
 	if err = format.Node(dst, fset, file); err != nil {
 		return err
 	}
 	return nil
+}
+
+func cleanUnusedImports(fset *token.FileSet, file *ast.File) {
+	imps := astutil.Imports(fset, file)
+	for _, group := range imps {
+		for _, imp := range group {
+			path := strings.Trim(imp.Path.Value, `"`)
+			if !astutil.UsesImport(file, path) {
+				if imp.Name != nil {
+					astutil.DeleteNamedImport(fset, file, imp.Name.Name, path)
+				} else {
+					astutil.DeleteImport(fset, file, path)
+				}
+			}
+		}
+	}
+	ast.SortImports(fset, file)
 }

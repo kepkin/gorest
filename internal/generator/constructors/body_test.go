@@ -16,6 +16,7 @@ func TestMakeBodyConstructor(t *testing.T) {
 			Name: "IncomeRequestBody",
 			Fields: []translator.Field{
 				{Name: "JSON", GoType: "IncomeRequestBodyJSON"},
+				{Name: "Type", GoType: "ContentType"},
 			},
 		}
 
@@ -40,6 +41,7 @@ func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []F
 			Fields: []translator.Field{
 				{Name: "JSON", GoType: "IncomeRequestBodyJSON"},
 				{Name: "XML", GoType: "IncomeRequestBodyXML"},
+				{Name: "Type", GoType: "ContentType"},
 			},
 		}
 

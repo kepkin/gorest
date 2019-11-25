@@ -25,7 +25,7 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 			if err := json.NewDecoder(c.Request.Body).Decode(result.JSON); err != nil {
 				errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
 			}
-		{{- end }}
+		{{ end }}
 
 		{{- if eq .Name "XML" }}
 		case "application/xml":
@@ -33,9 +33,7 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 			if err := xml.NewDecoder(c.Request.Body).Decode(result.XML); err != nil {
 				errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from XML", err))
 			}
-		{{- end }}
-	{{- end }}
-	{{ end -}}
+		{{ end }}{{ end }}{{ end -}}
 	}
 	return
 }

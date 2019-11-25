@@ -17,6 +17,10 @@ var pathParamsConstructorTemplate = template.Must(template.New("pathParamsConstr
 	"FloatConstructor": makeFloatConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
+	{{- if .HasNoStringFields }}
+	var err error
+	{{ end }}
+
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
 		
@@ -25,12 +29,12 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- end }}
 
 		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ = c.Params.Get("{{ .Parameter }}")
+			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
 			{{ IntConstructor . "InPath" }}
 		{{- end }}
 
 		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ = c.Params.Get("{{ .Parameter }}")
+			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
 			{{ FloatConstructor . "InPath" }}
 		{{- end }}
 

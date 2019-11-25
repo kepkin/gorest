@@ -33,9 +33,11 @@ func TestMakeHeaderParamsConstructor(t *testing.T) {
 	assert.Equal(t, `package api
 
 func MakeIncomeRequestHeader(c *gin.Context) (result IncomeRequestHeader, errors []FieldError) {
+	var err error
+
 	result.XAccessToken = c.Request.Header.Get("X-Access-Token")
 
-	xConsumerIDStr = c.Request.Header.Get("X-Consumer-ID")
+	xConsumerIDStr := c.Request.Header.Get("X-Consumer-ID")
 	result.XConsumerID, err = strconv.ParseInt(xConsumerIDStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InHeader, "X-Consumer-ID", "can't parse as integer", err))

@@ -17,6 +17,10 @@ var cookieParamsConstructorTemplate = template.Must(template.New("cookieParamsCo
 	"FloatConstructor": makeFloatConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
+	{{- if .HasNoStringFields }}
+	var err error
+	{{ end }}
+
 	{{- with .Fields }}
 		getCookie := func(param string) (string, bool) {
 			cookie, err := c.Request.Cookie(param)
@@ -35,12 +39,12 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- end }}
 
 		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ = getCookie("{{ .Parameter }}")
+			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
 			{{ IntConstructor . "InCookie" }}
 		{{- end }}
 
 		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ = getCookie("{{ .Parameter }}")
+			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
 			{{ FloatConstructor . "InCookie" }}
 		{{- end }}
 

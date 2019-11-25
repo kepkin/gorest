@@ -17,6 +17,10 @@ var headerParamsConstructorTemplate = template.Must(template.New("headerParamsCo
 	"FloatConstructor": makeFloatConstructor,
 }).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
+	{{- if .HasNoStringFields }}
+	var err error
+	{{ end }}
+
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
 		
@@ -25,12 +29,12 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- end }}
 
 		{{- if .IsInteger }}
-			{{ .StrVarName }} = c.Request.Header.Get("{{ .Parameter }}")
+			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
 			{{ IntConstructor . "InHeader" }}
 		{{- end }}
 
 		{{- if .IsFloat }}
-			{{ .StrVarName }} = c.Request.Header.Get("{{ .Parameter }}")
+			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
 			{{ FloatConstructor . "InHeader" }}
 		{{- end }}
 
