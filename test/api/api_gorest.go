@@ -256,6 +256,8 @@ type Payment struct {
 
 type ID string
 
+type Payments []Payment
+
 // Custom types
 
 type FromStringSetter interface {

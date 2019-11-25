@@ -87,3 +87,8 @@ components:
     ID:
       type:
         string
+
+    Payments:
+      type: array
+      items:
+        $ref: '#/components/schemas/Payment'

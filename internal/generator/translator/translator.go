@@ -10,13 +10,6 @@ import (
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
-var specToGoTypes = map[openapi3.Type]string{
-	openapi3.BooleanType: "bool",
-	openapi3.IntegerType: "int64",
-	openapi3.NumberType:  "float64",
-	openapi3.StringType:  "string",
-}
-
 type FieldType int
 
 const (
@@ -111,11 +104,24 @@ func ProcessObjSchema(schema openapi3.SchemaType, queue *list.List) (def TypeDef
 		// err = fmt.Errorf("schema must be `object`, got: `%s`", schema.Type)
 		def.Name = MakeIdentifier(schema.Name)
 
-		goType, ok := specToGoTypes[schema.Type]
-		if !ok {
-			err = fmt.Errorf("unsupported type: %s", schema.Type)
+		var goType string
+
+		switch schema.Type {
+		case openapi3.BooleanType:
+			goType = "bool"
+		case openapi3.IntegerType:
+			goType = "int64"
+		case openapi3.NumberType:
+			goType = "float64"
+		case openapi3.StringType:
+			goType = "string"
+		case openapi3.ArrayType:
+			goType = "[]" + GetNameFromRef(schema.Items.Ref)
+		default:
+			err = fmt.Errorf("unsupported type: `%s` of schema %v", schema.Type, schema)
 			return
 		}
+
 		def.GoType = goType
 		return
 	}
