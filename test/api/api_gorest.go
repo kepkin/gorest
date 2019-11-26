@@ -60,8 +60,8 @@ type PaymentGatewayAPI interface {
 	ProvidePayment(in ProvidePaymentRequest, c *gin.Context)
 
 	// Service methods
-	ProcessMakeRequestErrors(errors []FieldError)
-	ProcessValidateErrors(errors []FieldError)
+	ProcessMakeRequestErrors(c *gin.Context, errors []FieldError)
+	ProcessValidateErrors(c *gin.Context, errors []FieldError)
 }
 
 type PaymentGatewayAPIServer struct {
@@ -168,13 +168,13 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_Example_Handler(c *gin.
 
 	req, errors := MakeExampleRequest(c)
 	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(errors)
+		server.Srv.ProcessMakeRequestErrors(c, errors)
 		return
 	}
 
 	errors = req.Validate()
 	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(errors)
+		server.Srv.ProcessValidateErrors(c, errors)
 		return
 	}
 
@@ -217,13 +217,13 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetPayment_Handler(c *g
 
 	req, errors := MakeGetPaymentRequest(c)
 	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(errors)
+		server.Srv.ProcessMakeRequestErrors(c, errors)
 		return
 	}
 
 	errors = req.Validate()
 	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(errors)
+		server.Srv.ProcessValidateErrors(c, errors)
 		return
 	}
 
@@ -273,13 +273,13 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_ProvidePayment_Handler(
 
 	req, errors := MakeProvidePaymentRequest(c)
 	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(errors)
+		server.Srv.ProcessMakeRequestErrors(c, errors)
 		return
 	}
 
 	errors = req.Validate()
 	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(errors)
+		server.Srv.ProcessValidateErrors(c, errors)
 		return
 	}
 
@@ -296,16 +296,16 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 	r.Handle("POST", "/v1/payment", e._PaymentGatewayAPI_ProvidePayment_Handler)
 }
 
-type ID string
-
-type Payments []Payment
-
 type Payment struct {
 	MerchantID string          `json:"merchant_id"`
 	Meta       json.RawMessage `json:"meta"`
 	PaymentID  ID              `json:"payment_id"`
 	Sum        Decimal         `json:"sum"`
 }
+
+type ID string
+
+type Payments []Payment
 
 // Custom types
 

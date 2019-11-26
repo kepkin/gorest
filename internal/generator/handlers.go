@@ -149,13 +149,13 @@ func (server {{ .InterfaceName }}Server) _{{ .InterfaceName }}_{{ .Path.Operatio
 	{{ with .Request.Properties }}
 	req, errors := Make{{ $.Path.OperationID }}Request(c)
 	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(errors)
+		server.Srv.ProcessMakeRequestErrors(c, errors)
 		return
 	}
 
 	errors = req.Validate()
 	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(errors)
+		server.Srv.ProcessValidateErrors(c, errors)
 		return
 	}
 

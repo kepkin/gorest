@@ -74,8 +74,8 @@ type TestAPI interface {
 	UpdateUser(in UpdateUserRequest, c *gin.Context)
 
 	// Service methods
-	ProcessMakeRequestErrors(errors []FieldError)
-	ProcessValidateErrors(errors []FieldError)
+	ProcessMakeRequestErrors(c *gin.Context, errors []FieldError)
+	ProcessValidateErrors(c *gin.Context, errors []FieldError)
 }
 
 type TestAPIServer struct {

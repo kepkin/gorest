@@ -26,8 +26,8 @@ type {{ .InterfaceName }} interface {
         {{- end }}
 	{{ end }}
 	// Service methods
-	ProcessMakeRequestErrors(errors []FieldError)
-	ProcessValidateErrors(errors []FieldError)
+	ProcessMakeRequestErrors(c *gin.Context, errors []FieldError)
+	ProcessValidateErrors(c *gin.Context, errors []FieldError)
 }
 
 type {{ .InterfaceName }}Server struct {

@@ -21,11 +21,11 @@ func (p *PaymentGatewayAPIImpl) Example(in ExampleRequest, c *gin.Context) {
 	panic("implement me")
 }
 
-func (p *PaymentGatewayAPIImpl) ProcessMakeRequestErrors(errors []FieldError) {
+func (p *PaymentGatewayAPIImpl) ProcessMakeRequestErrors(c *gin.Context, errors []FieldError) {
 	panic("implement me")
 }
 
-func (p *PaymentGatewayAPIImpl) ProcessValidateErrors(errors []FieldError) {
+func (p *PaymentGatewayAPIImpl) ProcessValidateErrors(c *gin.Context, errors []FieldError) {
 	panic("implement me")
 }
 
