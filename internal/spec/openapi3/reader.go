@@ -6,25 +6,25 @@ type Type string
 
 const (
 	ArrayType   Type = "array"
-	BooleanType      = "boolean"
-	IntegerType      = "integer"
-	NumberType       = "number"
-	ObjectType       = "object"
-	StringType       = "string"
+	BooleanType Type = "boolean"
+	IntegerType Type = "integer"
+	NumberType  Type = "number"
+	ObjectType  Type = "object"
+	StringType  Type = "string"
 )
 
 type Format string
 
 const (
 	Integer32bit Format = "int32"
-	Integer64bit        = "int64"
+	Integer64bit Format = "int64"
 
-	NumberFloat  = "float"
-	NumberDouble = "double"
+	NumberFloat  Format = "float"
+	NumberDouble Format = "double"
 
-	Date     = "date"
-	DateTime = "date-time"
-	UnixTime = "unix-time"
+	Date     Format = "date"
+	DateTime Format = "date-time"
+	UnixTime Format = "unix-time"
 )
 
 func ReadSpec(in []byte) (res Spec, err error) {
