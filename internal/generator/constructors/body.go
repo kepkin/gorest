@@ -22,7 +22,7 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- if eq .Name "JSON" }}
 		case "application/json":
 			result.Type = AppJSON
-			if err := json.NewDecoder(c.Request.Body).Decode(result.JSON); err != nil {
+			if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
 				errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
 			}
 		{{ end }}
@@ -30,10 +30,15 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- if eq .Name "XML" }}
 		case "application/xml":
 			result.Type = AppXML
-			if err := xml.NewDecoder(c.Request.Body).Decode(result.XML); err != nil {
+			if err := xml.NewDecoder(c.Request.Body).Decode(&result.XML); err != nil {
 				errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from XML", err))
 			}
-		{{ end }}{{ end }}{{ end -}}
+		{{ end }}
+	{{ end }}
+	{{ end -}}
+
+	default:
+		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
 	}
 	return
 }

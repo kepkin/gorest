@@ -7,8 +7,9 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kepkin/gorest/test/api"
-	"github.com/magiconair/properties/assert"
 )
 
 //go:generate go run generate_api.go
@@ -24,10 +25,12 @@ func TestProvidePayment(t *testing.T) {
 			"sum": "1000.50"
 		}
 	`)))
-	request.Header.Set("Content-GoType", "application/json")
+	request.Header.Set("Content-Type", "application/json")
 	response := httptest.NewRecorder()
 
 	r.ServeHTTP(response, request)
-	assert.Equal(t, response.Code, http.StatusOK)
-	assert.Equal(t, response.Body.String(), "")
+	if !assert.Equal(t, http.StatusOK, response.Code, response.Body.String()) {
+		return
+	}
+	assert.Equal(t, response.Body.String(), `{"provided_total":1000}`)
 }

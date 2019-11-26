@@ -26,9 +26,12 @@ func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []F
 	switch c.Request.Header.Get("Content-Type") {
 	case "application/json":
 		result.Type = AppJSON
-		if err := json.NewDecoder(c.Request.Body).Decode(result.JSON); err != nil {
+		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
 			errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
 		}
+
+	default:
+		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
 	}
 	return
 }
@@ -51,15 +54,18 @@ func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []F
 	switch c.Request.Header.Get("Content-Type") {
 	case "application/json":
 		result.Type = AppJSON
-		if err := json.NewDecoder(c.Request.Body).Decode(result.JSON); err != nil {
+		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
 			errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
 		}
 
 	case "application/xml":
 		result.Type = AppXML
-		if err := xml.NewDecoder(c.Request.Body).Decode(result.XML); err != nil {
+		if err := xml.NewDecoder(c.Request.Body).Decode(&result.XML); err != nil {
 			errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from XML", err))
 		}
+
+	default:
+		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
 	}
 	return
 }

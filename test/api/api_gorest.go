@@ -261,9 +261,12 @@ func MakeProvidePaymentRequestBody(c *gin.Context) (result ProvidePaymentRequest
 	switch c.Request.Header.Get("Content-Type") {
 	case "application/json":
 		result.Type = AppJSON
-		if err := json.NewDecoder(c.Request.Body).Decode(result.JSON); err != nil {
+		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
 			errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
 		}
+
+	default:
+		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
 	}
 	return
 }
@@ -296,6 +299,8 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 	r.Handle("POST", "/v1/payment", e._PaymentGatewayAPI_ProvidePayment_Handler)
 }
 
+type Payments []Payment
+
 type Payment struct {
 	MerchantID string          `json:"merchant_id"`
 	Meta       json.RawMessage `json:"meta"`
@@ -304,8 +309,6 @@ type Payment struct {
 }
 
 type ID string
-
-type Payments []Payment
 
 // Custom types
 
