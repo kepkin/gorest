@@ -19,11 +19,14 @@ const (
 	BooleanField
 	ComponentField
 	CustomField
+	DateField
+	DateTimeField
 	FloatField
 	FreeFormObject
 	IntegerField
 	StringField
 	StructField
+	UnixTimeField
 )
 
 type TypeDef struct {
@@ -57,6 +60,14 @@ func (f Field) StrVarName() string {
 	return strcase.ToLowerCamel(f.Parameter) + "Str"
 }
 
+func (f Field) SecondsVarName() string {
+	return strcase.ToLowerCamel(f.Parameter) + "Sec"
+}
+
+func (f Field) IsCustom() bool {
+	return f.Type == CustomField
+}
+
 func (f Field) IsString() bool {
 	return f.Type == StringField
 }
@@ -69,8 +80,16 @@ func (f Field) IsFloat() bool {
 	return f.Type == FloatField
 }
 
-func (f Field) IsCustom() bool {
-	return f.Type == CustomField
+func (f Field) IsDate() bool {
+	return f.Type == DateField
+}
+
+func (f Field) IsDateTime() bool {
+	return f.Type == DateTimeField
+}
+
+func (f Field) IsUnixTime() bool {
+	return f.Type == UnixTimeField
 }
 
 func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
@@ -191,7 +210,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(schema.Format)
+			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
@@ -220,7 +239,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(schema.Format)
+			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
@@ -262,9 +281,26 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		}, nil
 
 	case openapi3.StringType:
+		type_ := StringField
+		goType := "string"
+
+		switch schema.Format {
+		case openapi3.Date:
+			type_ = DateField
+			goType = "time.Time"
+
+		case openapi3.DateTime:
+			type_ = DateTimeField
+			goType = "time.Time"
+
+		case openapi3.UnixTime:
+			type_ = UnixTimeField
+			goType = "time.Time"
+		}
+
 		return Field{
-			Type:      StringField,
-			GoType:    "string",
+			Type:      type_,
+			GoType:    goType,
 			Name:      schema.Name,
 			Parameter: parameter,
 		}, nil
@@ -278,7 +314,13 @@ func MakeIdentifier(s string) string {
 	result := strcase.ToCamel(strings.ReplaceAll(s, " ", "_"))
 
 	for _, suff := range [...]string{
-		"Id", "Url", "Http", "Json", "Inn",
+		"Db",
+		"Http",
+		"Id",
+		"Inn",
+		"Json",
+		"Sql",
+		"Url",
 	} {
 		if strings.HasSuffix(result, suff) {
 			result = result[:len(result)-len(suff)] + strings.ToUpper(suff)

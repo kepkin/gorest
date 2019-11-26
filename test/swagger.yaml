@@ -38,6 +38,24 @@ paths:
             type: integer
             format: decimal
 
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: 'date'
+
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: 'date-time'
+
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: 'unix-time'
+
       responses:
         '200':
           description: OK

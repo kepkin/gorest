@@ -4,6 +4,7 @@ import (
 	"io"
 	"text/template"
 
+	"github.com/kepkin/gorest/internal/generator/constructors/fields"
 	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
@@ -12,11 +13,7 @@ func MakeHeaderParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return headerParamsConstructorTemplate.Execute(wr, def)
 }
 
-var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(template.FuncMap{
-	"CustomFieldConstructor": makeCustomFieldConstructor,
-	"IntConstructor":         makeIntFieldConstructor,
-	"FloatConstructor":       makeFloatFieldConstructor,
-}).Parse(`
+var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(fields.Constructors).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -42,6 +39,16 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- if .IsFloat }}
 			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
 			{{ FloatConstructor . "InHeader" }}
+		{{- end }}
+
+		{{- if or .IsDate .IsDateTime }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ TimeConstructor . "InQuery" }}
+		{{- end }}
+
+		{{- if .IsUnixTime }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ UnixTimeConstructor . "InQuery" }}
 		{{- end }}
 
 	{{- end }}

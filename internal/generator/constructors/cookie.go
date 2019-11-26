@@ -4,6 +4,7 @@ import (
 	"io"
 	"text/template"
 
+	"github.com/kepkin/gorest/internal/generator/constructors/fields"
 	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
@@ -12,11 +13,7 @@ func MakeCookieParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return cookieParamsConstructorTemplate.Execute(wr, def)
 }
 
-var cookieParamsConstructorTemplate = template.Must(template.New("cookieParamsConstructor").Funcs(template.FuncMap{
-	"CustomFieldConstructor": makeCustomFieldConstructor,
-	"IntConstructor":         makeIntFieldConstructor,
-	"FloatConstructor":       makeFloatFieldConstructor,
-}).Parse(`
+var cookieParamsConstructorTemplate = template.Must(template.New("cookieParamsConstructor").Funcs(fields.Constructors).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -52,6 +49,16 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 		{{- if .IsFloat }}
 			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
 			{{ FloatConstructor . "InCookie" }}
+		{{- end }}
+
+		{{- if or .IsDate .IsDateTime }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ TimeConstructor . "InQuery" }}
+		{{- end }}
+
+		{{- if .IsUnixTime }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ UnixTimeConstructor . "InQuery" }}
 		{{- end }}
 
 	{{- end }}

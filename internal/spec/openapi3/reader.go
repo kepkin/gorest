@@ -13,12 +13,18 @@ const (
 	StringType       = "string"
 )
 
+type Format string
+
 const (
-	Integer32bit = "int32"
-	Integer64bit = "int64"
+	Integer32bit Format = "int32"
+	Integer64bit        = "int64"
 
 	NumberFloat  = "float"
 	NumberDouble = "double"
+
+	Date     = "date"
+	DateTime = "date-time"
+	UnixTime = "unix-time"
 )
 
 func ReadSpec(in []byte) (res Spec, err error) {
@@ -114,7 +120,7 @@ type SchemaType struct {
 	Description string
 	// TODO(a.telyshev) Enum
 	// TODO(a.telyshev) Default
-	Format     string
+	Format     Format
 	Type       Type
 	IsNullable bool `yaml:"nullable"`
 
