@@ -1,9 +1,9 @@
 
-gorest: install generate
+gorest: install
 	go build ./cmd/gorest
 
-test: install generate
-	go test ./... -count=1
+test: install
+	go test -count=1 ./...
 
 install:
 	go get -d ./...

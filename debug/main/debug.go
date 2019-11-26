@@ -1,5 +1,3 @@
-// +build ignore
-
 package main
 
 import (
@@ -9,9 +7,9 @@ import (
 )
 
 func main() {
-	err := gorest.Generate("swagger.yaml", gorest.Options{
+	err := gorest.Generate("test/swagger.yaml", gorest.Options{
 		PackageName: "api",
-		TargetFile:  "api/api_gorest.go",
+		TargetFile:  "/tmp/api_gorest.go",
 	})
 	if err != nil {
 		log.Fatal(err)

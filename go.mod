@@ -11,16 +11,14 @@ require (
 	github.com/huandu/xstrings v1.2.0 // indirect
 	github.com/iancoleman/strcase v0.0.0-20190422225806-e506e3ef7365
 	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
 	github.com/magiconair/properties v1.8.0
-	github.com/mitchellh/go-homedir v1.1.0
-	github.com/pkg/errors v0.8.0
 	github.com/shopspring/decimal v0.0.0-20191009025716-f1972eb1d1f5
-	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
-	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/tools v0.0.0-20190311212946-11955173bddd
+	github.com/ugorji/go v1.1.7 // indirect
+	golang.org/x/tools v0.0.0-20191125011157-cc15fab314e3
+	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
 

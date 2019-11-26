@@ -15,7 +15,7 @@ import (
 
 func TestProvidePayment(t *testing.T) {
 	r := gin.New()
-	api.RegisterRoutes(r, new(api.PaymentGatewayAPIImpl))
+	api.RegisterRoutes(r, &api.PaymentGatewayAPIImpl{})
 
 	request := httptest.NewRequest(http.MethodPost, "/v1/payment", bytes.NewReader([]byte(`
 		{
@@ -24,7 +24,7 @@ func TestProvidePayment(t *testing.T) {
 			"sum": "1000.50"
 		}
 	`)))
-	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Content-GoType", "application/json")
 	response := httptest.NewRecorder()
 
 	r.ServeHTTP(response, request)

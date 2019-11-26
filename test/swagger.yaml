@@ -11,6 +11,55 @@ servers:
     description: Develop
 
 paths:
+  /v1/example/:year/:user:
+    get:
+      operationId: Example
+
+      parameters:
+        - name: year
+          in: path
+          schema:
+            type: integer
+            format: int64
+
+        - name: user
+          in: path
+          schema:
+            type: object
+            properties:
+              role:
+                type: string
+              firstName:
+                type: string
+
+        - name: sum
+          in: query
+          schema:
+            type: integer
+            format: decimal
+
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: 'date'
+
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: 'date-time'
+
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: 'unix-time'
+
+      responses:
+        '200':
+          description: OK
+
   /v1/payment:
     get:
       operationId: GetPayment
@@ -47,13 +96,23 @@ components:
       type: object
       properties:
         payment_id:
-          type: string
-          required: true
+          $ref: '#/components/schemas/ID'
 
         merchant_id:
           type: string
-          required: true
 
         sum:
           type: number
           format: decimal
+
+        meta:
+          type: object
+
+    ID:
+      type:
+        string
+
+    Payments:
+      type: array
+      items:
+        $ref: '#/components/schemas/Payment'
