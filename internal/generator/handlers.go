@@ -72,7 +72,7 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		request.Properties["Cookie"] = &cookieParams
 	}
 	if len(headerParams.Properties) > 0 {
-		request.Properties["Header"] = &headerParams
+		request.Properties["Headers"] = &headerParams
 	}
 
 	if method.RequestBody != nil {

@@ -12,7 +12,7 @@ import (
 
 func TestMakeHeaderParamsConstructor(t *testing.T) {
 	def := translator.TypeDef{
-		Name: "IncomeRequestHeader",
+		Name: "IncomeRequestHeaders",
 		Fields: []translator.Field{
 			{Name: "XAccessToken", GoType: "string", Parameter: "X-Access-Token", Type: translator.StringField},
 			{Name: "XConsumerID", GoType: "int64", Parameter: "X-Consumer-ID", Type: translator.IntegerField},
@@ -32,7 +32,7 @@ func TestMakeHeaderParamsConstructor(t *testing.T) {
 
 	assert.Equal(t, `package api
 
-func MakeIncomeRequestHeader(c *gin.Context) (result IncomeRequestHeader, errors []FieldError) {
+func MakeIncomeRequestHeaders(c *gin.Context) (result IncomeRequestHeaders, errors []FieldError) {
 	var err error
 
 	result.XAccessToken = c.Request.Header.Get("X-Access-Token")
