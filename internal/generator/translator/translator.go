@@ -109,12 +109,15 @@ func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
 			if err != nil {
 				return nil, err
 			}
+
 			result = append(result, def)
 
 		} else {
 			return nil, fmt.Errorf("unprocessible entity: %v", el.Value)
 		}
 	}
+
+	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
 	return result, nil
 }
 

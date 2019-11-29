@@ -11,7 +11,8 @@ var Constructors = template.FuncMap{
 	"CustomFieldConstructor": MakeCustomFieldConstructor,
 	"FloatConstructor":       MakeFloatFieldConstructor,
 	"IntConstructor":         MakeIntFieldConstructor,
-	"TimeConstructor":        MakeTimeFieldConstructor,
+	"DateTimeConstructor":    MakeDateTimeFieldConstructor,
+	"DateConstructor":        MakeDateFieldConstructor,
 	"UnixTimeConstructor":    MakeUnixTimeFieldConstructor,
 }
 

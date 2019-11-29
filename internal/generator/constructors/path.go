@@ -43,12 +43,17 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 		{{- if or .IsDate .IsDateTime }}
 			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ TimeConstructor . "InQuery" }}
+			{{ DateTimeConstructor . "InPath" }}
+		{{- end }}
+
+        {{- if .IsDateTime }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			{{ DateTimeConstructor . "InPath" }}
 		{{- end }}
 
 		{{- if .IsUnixTime }}
 			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InQuery" }}
+			{{ UnixTimeConstructor . "InPath" }}
 		{{- end }}
 
 	{{- end }}

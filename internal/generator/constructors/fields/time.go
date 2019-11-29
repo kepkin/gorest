@@ -7,17 +7,30 @@ import (
 	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
-var timeFieldTemplate = template.Must(template.New("timeField").Parse(
+var dateFieldTemplate = template.Must(template.New("dateField").Parse(
+	`result.{{ .Name }}, err = time.Parse("2006-01-02", {{ .StrVarName }})
+if err != nil {
+	errors = append(errors, NewFieldError({{ .Place }}, "{{ .Parameter }}", "can't parse as RFC3339 date", err))
+}`))
+
+func MakeDateFieldConstructor(f translator.Field, place string) (string, error) {
+	if !(f.Type == translator.DateField) {
+		return "", fmt.Errorf("%v isn't date field", f)
+	}
+	return executeFieldConstructorTemplate(dateFieldTemplate, f, place)
+}
+
+var dateTimeFieldTemplate = template.Must(template.New("timeField").Parse(
 	`result.{{ .Name }}, err = time.Parse(time.RFC3339, {{ .StrVarName }})
 if err != nil {
 	errors = append(errors, NewFieldError({{ .Place }}, "{{ .Parameter }}", "can't parse as RFC3339 time", err))
 }`))
 
-func MakeTimeFieldConstructor(f translator.Field, place string) (string, error) {
-	if !(f.Type == translator.DateField || f.Type == translator.DateTimeField) {
-		return "", fmt.Errorf("%v isn't date[time] field", f)
+func MakeDateTimeFieldConstructor(f translator.Field, place string) (string, error) {
+	if !(f.Type == translator.DateTimeField) {
+		return "", fmt.Errorf("%v isn't datetime field", f)
 	}
-	return executeFieldConstructorTemplate(timeFieldTemplate, f, place)
+	return executeFieldConstructorTemplate(dateTimeFieldTemplate, f, place)
 }
 
 var unixTimeFieldTemplate = template.Must(template.New("timeField").Parse(

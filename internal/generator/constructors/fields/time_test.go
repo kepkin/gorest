@@ -8,23 +8,55 @@ import (
 	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
-func TestMakeTimeFieldConstructor(t *testing.T) {
+func TestMakeDateFieldConstructor(t *testing.T) {
 	t.Run("No datetime field", func(t *testing.T) {
-		_, err := MakeTimeFieldConstructor(translator.Field{
+		_, err := MakeDateFieldConstructor(translator.Field{
 			Type: translator.DateTimeField * 2,
 		}, "InCookie")
 		assert.Error(t, err)
 	})
 
 	t.Run("No date field", func(t *testing.T) {
-		_, err := MakeTimeFieldConstructor(translator.Field{
+		_, err := MakeDateFieldConstructor(translator.Field{
 			Type: translator.DateField * 2,
 		}, "InCookie")
 		assert.Error(t, err)
 	})
 
 	t.Run("Time field example", func(t *testing.T) {
-		s, err := MakeTimeFieldConstructor(translator.Field{
+		s, err := MakeDateFieldConstructor(translator.Field{
+			Name:      "FromDate",
+			Parameter: "fromDate",
+			GoType:    "time.Time",
+			Type:      translator.DateField,
+		}, "InQuery")
+		if !assert.NoError(t, err) {
+			return
+		}
+		assert.Equal(t, `result.FromDate, err = time.Parse("2006-01-02", fromDateStr)
+if err != nil {
+	errors = append(errors, NewFieldError(InQuery, "fromDate", "can't parse as RFC3339 date", err))
+}`, s)
+	})
+}
+
+func TestMakeDateTimeFieldConstructor(t *testing.T) {
+	t.Run("No datetime field", func(t *testing.T) {
+		_, err := MakeDateTimeFieldConstructor(translator.Field{
+			Type: translator.DateTimeField * 2,
+		}, "InCookie")
+		assert.Error(t, err)
+	})
+
+	t.Run("No date field", func(t *testing.T) {
+		_, err := MakeDateTimeFieldConstructor(translator.Field{
+			Type: translator.DateField * 2,
+		}, "InCookie")
+		assert.Error(t, err)
+	})
+
+	t.Run("Time field example", func(t *testing.T) {
+		s, err := MakeDateTimeFieldConstructor(translator.Field{
 			Name:      "FromDate",
 			Parameter: "fromDate",
 			GoType:    "time.Time",

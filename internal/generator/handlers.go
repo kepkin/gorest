@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"fmt"
 	"io"
+	"sort"
 	"text/template"
 
 	"github.com/kepkin/gorest/internal/generator/constructors"
@@ -15,7 +16,15 @@ import (
 func (g *Generator) makeHandlers(wr io.Writer, sp openapi3.Spec) error {
 	interfaceName := translator.MakeIdentifier(sp.Info.Title)
 
-	for _, path := range sp.Paths {
+	sortedPaths := make([]string, 0, len(sp.Paths))
+	for k := range sp.Paths {
+		sortedPaths = append(sortedPaths, k)
+	}
+
+	sort.Strings(sortedPaths)
+
+	for _, pathKey := range sortedPaths {
+		path := sp.Paths[pathKey]
 		for _, method := range path.Methods() {
 			if method != nil {
 				root, err := g.makeRequest(wr, interfaceName, method)
@@ -117,24 +126,30 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 	if err := constructors.MakeRequestConstructor(wr, rootDef); err != nil {
 		return s{}, err
 	}
-	for params, constructor := range map[*openapi3.SchemaType]func(io.Writer, translator.TypeDef) error{
-		&body:         constructors.MakeBodyConstructor,
-		&headerParams: constructors.MakeHeaderParamsConstructor,
-		&cookieParams: constructors.MakeCookieParamsConstructor,
-		&pathParams:   constructors.MakePathParamsConstructor,
-		&queryParams:  constructors.MakeQueryParamsConstructor,
+
+	type SchemaConstructorPair struct {
+		Params *openapi3.SchemaType
+		Constructor func(io.Writer, translator.TypeDef) error
+	}
+
+	for _, e := range []SchemaConstructorPair{
+		{&body,         constructors.MakeBodyConstructor},
+		{&headerParams, constructors.MakeHeaderParamsConstructor},
+		{&cookieParams, constructors.MakeCookieParamsConstructor},
+		{&pathParams,   constructors.MakePathParamsConstructor},
+		{&queryParams,  constructors.MakeQueryParamsConstructor},
 	} {
-		if len(params.Properties) == 0 {
+		if len(e.Params.Properties) == 0 {
 			continue
 		}
 
-		def, err := translator.ProcessObjSchema(*params, list.New())
+		def, err := translator.ProcessObjSchema(*e.Params, list.New())
 		if err != nil {
 			return s{}, err
 		}
 
 		def.Name = defs[0].Name + def.Name
-		if err := constructor(wr, def); err != nil {
+		if err := e.Constructor(wr, def); err != nil {
 			return s{}, err
 		}
 	}
