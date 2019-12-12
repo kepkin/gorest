@@ -116,7 +116,7 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		}
 
 		if len(d.Fields) != 0 {
-			if err = makeValidateFunc(wr, d); err != nil {
+			if err = g.makeValidateFunc(wr, d); err != nil {
 				return s{}, err
 			}
 		}
@@ -128,16 +128,16 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 	}
 
 	type SchemaConstructorPair struct {
-		Params *openapi3.SchemaType
+		Params      *openapi3.SchemaType
 		Constructor func(io.Writer, translator.TypeDef) error
 	}
 
 	for _, e := range []SchemaConstructorPair{
-		{&body,         constructors.MakeBodyConstructor},
+		{&body, constructors.MakeBodyConstructor},
 		{&headerParams, constructors.MakeHeaderParamsConstructor},
 		{&cookieParams, constructors.MakeCookieParamsConstructor},
-		{&pathParams,   constructors.MakePathParamsConstructor},
-		{&queryParams,  constructors.MakeQueryParamsConstructor},
+		{&pathParams, constructors.MakePathParamsConstructor},
+		{&queryParams, constructors.MakeQueryParamsConstructor},
 	} {
 		if len(e.Params.Properties) == 0 {
 			continue

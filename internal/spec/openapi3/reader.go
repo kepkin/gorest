@@ -118,7 +118,7 @@ type ComponentsType struct {
 type SchemaType struct {
 	Title       string
 	Description string
-	// TODO(a.telyshev) Enum
+	Enum        []string
 	// TODO(a.telyshev) Default
 	Format     Format
 	Type       Type

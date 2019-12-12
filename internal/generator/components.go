@@ -28,6 +28,10 @@ func (g *Generator) makeComponents(wr io.Writer, sp openapi3.Spec) error {
 			if err := g.makeStruct(wr, d, true); err != nil {
 				return err
 			}
+
+			if err := g.makeValidateFunc(wr, d); err != nil {
+				return err
+			}
 		}
 	}
 

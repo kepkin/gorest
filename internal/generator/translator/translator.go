@@ -64,6 +64,14 @@ func (f Field) SecondsVarName() string {
 	return strcase.ToLowerCamel(f.Parameter) + "Sec"
 }
 
+func (f Field) IsStruct() bool {
+	return f.Type == StructField
+}
+
+func (f Field) IsComponent() bool {
+	return f.Type == ComponentField
+}
+
 func (f Field) IsCustom() bool {
 	return f.Type == CustomField
 }
@@ -191,6 +199,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			Name:      schema.Name,
 			Parameter: parameter,
 			GoType:    "[]" + t.GoType,
+			Schema:    schema,
 		}, nil
 
 	case openapi3.BooleanType:
@@ -199,6 +208,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			Name:      schema.Name,
 			Parameter: parameter,
 			GoType:    "bool",
+			Schema:    schema,
 		}, nil
 
 	case openapi3.IntegerType:
@@ -268,6 +278,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 				Parameter: parameter,
 				Name:      schema.Name,
 				GoType:    "json.RawMessage",
+				Schema:    schema,
 			}, nil
 		}
 
@@ -281,6 +292,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			Type:   StructField,
 			Name:   name,
 			GoType: type_,
+			Schema: schema,
 		}, nil
 
 	case openapi3.StringType:
@@ -306,6 +318,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			GoType:    goType,
 			Name:      schema.Name,
 			Parameter: parameter,
+			Schema:    schema,
 		}, nil
 
 	default:
@@ -323,6 +336,7 @@ func MakeIdentifier(s string) string {
 		"Inn",
 		"Json",
 		"Sql",
+		"Uid",
 		"Url",
 	} {
 		if strings.HasSuffix(result, suff) {
