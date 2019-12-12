@@ -44,7 +44,7 @@ func TestReadEnum(t *testing.T) {
 		return
 	}
 
-	var enums [][]string
+	enums := make([][]string, 0, len(method.Parameters))
 	for _, p := range method.Parameters {
 		enums = append(enums, p.Schema.Enum)
 	}

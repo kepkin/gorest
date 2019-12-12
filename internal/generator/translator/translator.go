@@ -223,12 +223,11 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
 				Parameter: parameter,
-				GoType:    type_,
+				GoType:    MakeTitledIdentifier(string(schema.Format)),
 				Schema:    schema,
 			}, nil
 		}
@@ -252,12 +251,11 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
 				Parameter: parameter,
-				GoType:    type_,
+				GoType:    MakeTitledIdentifier(string(schema.Format)),
 				Schema:    schema,
 			}, nil
 		}
@@ -283,38 +281,38 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		}
 
 		name := schema.Name
-		type_ := parentName + MakeTitledIdentifier(schema.Name)
+		goType := parentName + MakeTitledIdentifier(schema.Name)
 
-		schema.Name = type_
+		schema.Name = goType
 
 		queue.PushBack(schema)
 		return Field{
 			Type:   StructField,
 			Name:   name,
-			GoType: type_,
+			GoType: goType,
 			Schema: schema,
 		}, nil
 
 	case openapi3.StringType:
-		type_ := StringField
+		fieldType := StringField
 		goType := "string"
 
 		switch schema.Format {
 		case openapi3.Date:
-			type_ = DateField
-			goType = "time.Time"
+			fieldType = DateField
+			goType = "time.Time" //nolint:goconst
 
 		case openapi3.DateTime:
-			type_ = DateTimeField
+			fieldType = DateTimeField
 			goType = "time.Time"
 
 		case openapi3.UnixTime:
-			type_ = UnixTimeField
+			fieldType = UnixTimeField
 			goType = "time.Time"
 		}
 
 		return Field{
-			Type:      type_,
+			Type:      fieldType,
 			GoType:    goType,
 			Name:      schema.Name,
 			Parameter: parameter,

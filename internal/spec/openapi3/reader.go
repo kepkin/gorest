@@ -46,7 +46,7 @@ type InfoType struct {
 }
 
 type ServerType struct {
-	Url         string
+	URL         string `yaml:"url"`
 	Description string
 }
 
@@ -150,10 +150,10 @@ type StringSchema struct {
 
 type NumberSchema struct {
 	Maximum          float64
-	ExclusiveMaximum bool
 	Minimum          float64
-	ExclusiveMinimum bool
 	MultipleOf       float64
+	ExclusiveMaximum bool
+	ExclusiveMinimum bool
 
 	// Service fields
 	BitSize int
