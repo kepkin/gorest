@@ -53,8 +53,7 @@ func makeFieldValidators(f translator.Field) (string, error) {
 	return result.String(), nil
 }
 
-var enumValidator = template.Must(template.New("enumValidator").Parse(
-	`
+var enumValidator = template.Must(template.New("enumValidator").Parse(`
 var {{ .Parameter }}InEnum bool
 for _, elem := range [...]{{ .GoType }}{
 	{{- range $_, $val := .Schema.Enum }}

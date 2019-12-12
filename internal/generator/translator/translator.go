@@ -117,9 +117,7 @@ func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
 			if err != nil {
 				return nil, err
 			}
-
 			result = append(result, def)
-
 		} else {
 			return nil, fmt.Errorf("unprocessible entity: %v", el.Value)
 		}
@@ -268,9 +266,10 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		}, nil
 
 	case openapi3.ObjectType:
-		if len(schema.ObjectSchema.Properties) == 0 &&
-			(schema.AdditionalProperties == nil || len(schema.AdditionalProperties.Properties) == 0) {
+		noProperties := len(schema.ObjectSchema.Properties) == 0
+		noAdditionalProperties := schema.AdditionalProperties == nil || len(schema.AdditionalProperties.Properties) == 0
 
+		if noProperties && noAdditionalProperties {
 			return Field{
 				Type:      FreeFormObject,
 				Parameter: parameter,

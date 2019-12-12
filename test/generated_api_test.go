@@ -27,6 +27,7 @@ func TestProvidePayment(t *testing.T) {
 		}
 	`)))
 	request.Header.Set("Content-Type", "application/json")
+
 	response := httptest.NewRecorder()
 
 	r.ServeHTTP(response, request)

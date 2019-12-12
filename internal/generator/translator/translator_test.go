@@ -39,6 +39,7 @@ func TestProcessRootSchema(t *testing.T) {
 	if !assert.NoError(t, err) {
 		return
 	}
+
 	for i := range defs {
 		for j := range defs[i].Fields {
 			defs[i].Fields[j].Schema = openapi3.SchemaType{} // TODO(a.telyshev)
