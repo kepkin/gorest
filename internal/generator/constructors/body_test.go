@@ -78,6 +78,7 @@ func assertGeneratedCode(t *testing.T, def translator.TypeDef, expected string) 
 	if !assert.NoError(t, MakeBodyConstructor(b, def)) {
 		return
 	}
+
 	result := strings.NewReader("package api\n" + b.String())
 
 	prettyResult := &strings.Builder{}

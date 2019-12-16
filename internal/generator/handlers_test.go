@@ -42,10 +42,8 @@ paths:
             type: string
 `
 
+// TODO(a.telyshev): Write me
 func TestMakeHandler(t *testing.T) {
 	_, err := openapi3.ReadSpec([]byte(pathSpecYaml))
 	assert.NoError(t, err)
-
-	//assert.NoError(t,
-	//	makeHandlers(*spec.Paths["/api/v1/resource"].Post))
 }

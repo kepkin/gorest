@@ -44,13 +44,13 @@ paths:
 		return
 	}
 
-	b := new(strings.Builder)
+	b := &strings.Builder{}
 	if !assert.NoError(t, NewGenerator("api").makeInterface(b, sp)) {
 		return
 	}
 	result := strings.NewReader("package api\n" + b.String())
 
-	prettyResult := new(strings.Builder)
+	prettyResult := &strings.Builder{}
 	if !assert.NoError(t, barber.PrettifySource(result, prettyResult)) {
 		return
 	}

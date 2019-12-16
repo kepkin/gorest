@@ -27,11 +27,11 @@ func (p *PaymentGatewayAPIImpl) Example(in ExampleRequest, c *gin.Context) {
 }
 
 func (p *PaymentGatewayAPIImpl) ProcessMakeRequestErrors(c *gin.Context, errors []FieldError) {
-	c.JSON(http.StatusBadRequest, fmt.Sprintf("parse request error: %v", errors))
+	c.JSON(http.StatusBadRequest, fmt.Sprintf("parse request error: %+v", errors))
 }
 
 func (p *PaymentGatewayAPIImpl) ProcessValidateErrors(c *gin.Context, errors []FieldError) {
-	c.JSON(http.StatusBadRequest, fmt.Sprintf("validate request error: %v", errors))
+	c.JSON(http.StatusBadRequest, fmt.Sprintf("validate request error: %+v", errors))
 }
 
 func (p *PaymentGatewayAPIImpl) GetPayment(in GetPaymentRequest, c *gin.Context) {

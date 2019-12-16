@@ -12,7 +12,7 @@ import (
 )
 
 var routerTemplate = template.Must(template.New("router").Funcs(sprig.GenericFuncMap()).Funcs(template.FuncMap{
-	"ConvertUrl": convertUrl,
+	"ConvertUrl": convertURL,
 }).Parse(`
 // Router
 func RegisterRoutes(r *gin.Engine, api {{ .InterfaceName }}) {
@@ -36,6 +36,6 @@ func (Generator) makeRouter(wr io.Writer, sp openapi3.Spec) error {
 	})
 }
 
-func convertUrl(url string) string {
+func convertURL(url string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(url, "{", ":"), "}", "")
 }

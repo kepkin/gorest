@@ -64,6 +64,14 @@ func (f Field) SecondsVarName() string {
 	return strcase.ToLowerCamel(f.Parameter) + "Sec"
 }
 
+func (f Field) IsStruct() bool {
+	return f.Type == StructField
+}
+
+func (f Field) IsComponent() bool {
+	return f.Type == ComponentField
+}
+
 func (f Field) IsCustom() bool {
 	return f.Type == CustomField
 }
@@ -109,9 +117,7 @@ func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
 			if err != nil {
 				return nil, err
 			}
-
 			result = append(result, def)
-
 		} else {
 			return nil, fmt.Errorf("unprocessible entity: %v", el.Value)
 		}
@@ -191,6 +197,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			Name:      schema.Name,
 			Parameter: parameter,
 			GoType:    "[]" + t.GoType,
+			Schema:    schema,
 		}, nil
 
 	case openapi3.BooleanType:
@@ -199,6 +206,7 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			Name:      schema.Name,
 			Parameter: parameter,
 			GoType:    "bool",
+			Schema:    schema,
 		}, nil
 
 	case openapi3.IntegerType:
@@ -213,12 +221,11 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
 				Parameter: parameter,
-				GoType:    type_,
+				GoType:    MakeTitledIdentifier(string(schema.Format)),
 				Schema:    schema,
 			}, nil
 		}
@@ -242,12 +249,11 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 			schema.BitSize = 64
 
 		default:
-			type_ := MakeTitledIdentifier(string(schema.Format))
 			return Field{
 				Type:      CustomField,
 				Name:      schema.Name,
 				Parameter: parameter,
-				GoType:    type_,
+				GoType:    MakeTitledIdentifier(string(schema.Format)),
 				Schema:    schema,
 			}, nil
 		}
@@ -260,52 +266,56 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		}, nil
 
 	case openapi3.ObjectType:
-		if len(schema.ObjectSchema.Properties) == 0 &&
-			(schema.AdditionalProperties == nil || len(schema.AdditionalProperties.Properties) == 0) {
+		noProperties := len(schema.ObjectSchema.Properties) == 0
+		noAdditionalProperties := schema.AdditionalProperties == nil || len(schema.AdditionalProperties.Properties) == 0
 
+		if noProperties && noAdditionalProperties {
 			return Field{
 				Type:      FreeFormObject,
 				Parameter: parameter,
 				Name:      schema.Name,
 				GoType:    "json.RawMessage",
+				Schema:    schema,
 			}, nil
 		}
 
 		name := schema.Name
-		type_ := parentName + MakeTitledIdentifier(schema.Name)
+		goType := parentName + MakeTitledIdentifier(schema.Name)
 
-		schema.Name = type_
+		schema.Name = goType
 
 		queue.PushBack(schema)
 		return Field{
 			Type:   StructField,
 			Name:   name,
-			GoType: type_,
+			GoType: goType,
+			Schema: schema,
 		}, nil
 
 	case openapi3.StringType:
-		type_ := StringField
+		fieldType := StringField
 		goType := "string"
 
 		switch schema.Format {
 		case openapi3.Date:
-			type_ = DateField
-			goType = "time.Time"
+			fieldType = DateField
+			goType = "time.Time" //nolint:goconst
 
 		case openapi3.DateTime:
-			type_ = DateTimeField
+			fieldType = DateTimeField
 			goType = "time.Time"
 
 		case openapi3.UnixTime:
-			type_ = UnixTimeField
+			fieldType = UnixTimeField
 			goType = "time.Time"
 		}
 
 		return Field{
-			Type:      type_,
+			Type:      fieldType,
 			GoType:    goType,
 			Name:      schema.Name,
 			Parameter: parameter,
+			Schema:    schema,
 		}, nil
 
 	default:
@@ -323,6 +333,7 @@ func MakeIdentifier(s string) string {
 		"Inn",
 		"Json",
 		"Sql",
+		"Uid",
 		"Url",
 	} {
 		if strings.HasSuffix(result, suff) {

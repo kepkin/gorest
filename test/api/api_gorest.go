@@ -75,8 +75,18 @@ type ExampleRequest struct {
 	Query ExampleRequestQuery
 }
 
-func (t ExampleRequest) Validate() []FieldError {
-	return nil
+func (t ExampleRequest) Validate() (errors []FieldError) {
+	// Path field validators
+	errors = t.Path.Validate()
+	if errors != nil {
+		return
+	}
+	// Query field validators
+	errors = t.Query.Validate()
+	if errors != nil {
+		return
+	}
+	return
 }
 
 type ExampleRequestPath struct {
@@ -84,8 +94,14 @@ type ExampleRequestPath struct {
 	Year int64
 }
 
-func (t ExampleRequestPath) Validate() []FieldError {
-	return nil
+func (t ExampleRequestPath) Validate() (errors []FieldError) {
+	// User field validators
+	errors = t.User.Validate()
+	if errors != nil {
+		return
+	}
+	// Year field validators
+	return
 }
 
 type ExampleRequestPathUser struct {
@@ -93,8 +109,10 @@ type ExampleRequestPathUser struct {
 	Role      string
 }
 
-func (t ExampleRequestPathUser) Validate() []FieldError {
-	return nil
+func (t ExampleRequestPathUser) Validate() (errors []FieldError) {
+	// FirstName field validators
+	// Role field validators
+	return
 }
 
 type ExampleRequestQuery struct {
@@ -104,8 +122,12 @@ type ExampleRequestQuery struct {
 	To       time.Time
 }
 
-func (t ExampleRequestQuery) Validate() []FieldError {
-	return nil
+func (t ExampleRequestQuery) Validate() (errors []FieldError) {
+	// From field validators
+	// FromDate field validators
+	// Sum field validators
+	// To field validators
+	return
 }
 
 func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldError) {
@@ -142,9 +164,9 @@ func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors
 	}
 
 	fromDateStr, _ := c.GetQuery("fromDate")
-	result.FromDate, err = time.Parse(time.RFC3339, fromDateStr)
+	result.FromDate, err = time.Parse("2006-01-02", fromDateStr)
 	if err != nil {
-		errors = append(errors, NewFieldError(InQuery, "fromDate", "can't parse as RFC3339 time", err))
+		errors = append(errors, NewFieldError(InQuery, "fromDate", "can't parse as RFC3339 date", err))
 	}
 
 	sumStr, _ := c.GetQuery("sum")
@@ -187,16 +209,38 @@ type GetPaymentRequest struct {
 	Query GetPaymentRequestQuery
 }
 
-func (t GetPaymentRequest) Validate() []FieldError {
-	return nil
+func (t GetPaymentRequest) Validate() (errors []FieldError) {
+	// Query field validators
+	errors = t.Query.Validate()
+	if errors != nil {
+		return
+	}
+	return
 }
 
 type GetPaymentRequestQuery struct {
-	ID string
+	Async string
+	ID    string
 }
 
-func (t GetPaymentRequestQuery) Validate() []FieldError {
-	return nil
+func (t GetPaymentRequestQuery) Validate() (errors []FieldError) {
+	// Async field validators
+	var asyncInEnum bool
+	for _, elem := range [...]string{
+		"true",
+		"false",
+	} {
+		if elem == t.Async {
+			asyncInEnum = true
+			break
+		}
+	}
+	if !asyncInEnum {
+		errors = append(errors, NewFieldError(UndefinedPlace, "async", "allowed values: [true false]", nil))
+	}
+
+	// ID field validators
+	return
 }
 
 func MakeGetPaymentRequest(c *gin.Context) (result GetPaymentRequest, errors []FieldError) {
@@ -208,6 +252,8 @@ func MakeGetPaymentRequest(c *gin.Context) (result GetPaymentRequest, errors []F
 }
 
 func MakeGetPaymentRequestQuery(c *gin.Context) (result GetPaymentRequestQuery, errors []FieldError) {
+	result.Async, _ = c.GetQuery("async")
+
 	result.ID, _ = c.GetQuery("id")
 	return
 }
@@ -236,8 +282,13 @@ type ProvidePaymentRequest struct {
 	Body ProvidePaymentRequestBody
 }
 
-func (t ProvidePaymentRequest) Validate() []FieldError {
-	return nil
+func (t ProvidePaymentRequest) Validate() (errors []FieldError) {
+	// Body field validators
+	errors = t.Body.Validate()
+	if errors != nil {
+		return
+	}
+	return
 }
 
 type ProvidePaymentRequestBody struct {
@@ -245,8 +296,13 @@ type ProvidePaymentRequestBody struct {
 	Type ContentType
 }
 
-func (t ProvidePaymentRequestBody) Validate() []FieldError {
-	return nil
+func (t ProvidePaymentRequestBody) Validate() (errors []FieldError) {
+	// JSON field validators
+	errors = t.JSON.Validate()
+	if errors != nil {
+		return
+	}
+	return
 }
 
 func MakeProvidePaymentRequest(c *gin.Context) (result ProvidePaymentRequest, errors []FieldError) {
@@ -299,16 +355,52 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 	r.Handle("POST", "/v1/payment", e._PaymentGatewayAPI_ProvidePayment_Handler)
 }
 
-type Payments []Payment
+type ID string
+
+func (t ID) Validate() (errors []FieldError) {
+	return
+}
 
 type Payment struct {
 	MerchantID string          `json:"merchant_id"`
 	Meta       json.RawMessage `json:"meta"`
 	PaymentID  ID              `json:"payment_id"`
 	Sum        Decimal         `json:"sum"`
+	Type       string          `json:"type"`
 }
 
-type ID string
+func (t Payment) Validate() (errors []FieldError) {
+	// MerchantID field validators
+	// Meta field validators
+	// PaymentID field validators
+	errors = t.PaymentID.Validate()
+	if errors != nil {
+		return
+	}
+	// Sum field validators
+	// Type field validators
+	var typeInEnum bool
+	for _, elem := range [...]string{
+		"deposit",
+		"payment",
+	} {
+		if elem == t.Type {
+			typeInEnum = true
+			break
+		}
+	}
+	if !typeInEnum {
+		errors = append(errors, NewFieldError(UndefinedPlace, "type", "allowed values: [deposit payment]", nil))
+	}
+
+	return
+}
+
+type Payments []Payment
+
+func (t Payments) Validate() (errors []FieldError) {
+	return
+}
 
 // Custom types
 

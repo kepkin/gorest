@@ -22,10 +22,12 @@ func TestProvidePayment(t *testing.T) {
 		{
 			"payment_id": "c63dd8e4-ea77-11e9-b19a-5a001d190301",
 			"merchant_id": "cdb39a14-ea77-11e9-a6a4-5a001d190301",
-			"sum": "1000.50"
+			"sum": "1000.50",
+			"type": "deposit"
 		}
 	`)))
 	request.Header.Set("Content-Type", "application/json")
+
 	response := httptest.NewRecorder()
 
 	r.ServeHTTP(response, request)

@@ -71,6 +71,14 @@ paths:
           schema:
             type: string
 
+        - name: async
+          in: query
+          schema:
+            type: string
+            enum:
+              - true
+              - false
+
       responses:
         '200':
           description: OK
@@ -107,6 +115,12 @@ components:
 
         meta:
           type: object
+
+        type:
+          type: string
+          enum:
+            - deposit
+            - payment
 
     ID:
       type:
