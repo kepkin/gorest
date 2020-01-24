@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,6 +24,7 @@ const (
 	UndefinedPlace ParamPlace = iota
 	InBody
 	InCookie
+	InFormData
 	InHeader
 	InPath
 	InQuery
@@ -35,6 +37,7 @@ const (
 	AppJSON
 	AppXML
 	AppFormUrlencoded
+	MultipartFormData
 	TextPlain
 )
 

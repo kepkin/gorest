@@ -14,9 +14,17 @@ func MakeBodyConstructor(wr io.Writer, def translator.TypeDef) error {
 
 var bodyConstructorTemplate = template.Must(template.New("bodyConstructor").Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
-	switch c.Request.Header.Get("Content-Type") {
+	contentType := c.Request.Header.Get("Content-Type")
+	
+	if contentType == "" {
+		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
 
-	{{- range $, $field := .Fields }}
+	switch contentType  {
+
+	{{- range $i, $field := .Fields }}
 	{{- with $field }}
 		
 		{{- if eq .Name "JSON" }}
@@ -32,6 +40,15 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 			result.Type = AppXML
 			if err := xml.NewDecoder(c.Request.Body).Decode(&result.XML); err != nil {
 				errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from XML", err))
+			}
+		{{ end }}
+
+		{{- if eq .Name "Form" }}
+		case "multipart/form-data":
+			result.Type = MultipartFormData
+			result.Form, errors = Make{{ $.Name }}Form(c)
+			if errors != nil {
+				return
 			}
 		{{ end }}
 	{{ end }}

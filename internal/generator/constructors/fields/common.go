@@ -9,10 +9,11 @@ import (
 
 var Constructors = template.FuncMap{
 	"CustomFieldConstructor": MakeCustomFieldConstructor,
+	"DateConstructor":        MakeDateFieldConstructor,
+	"DateTimeConstructor":    MakeDateTimeFieldConstructor,
+	"FileConstructor":        MakeFileFieldConstructor,
 	"FloatConstructor":       MakeFloatFieldConstructor,
 	"IntConstructor":         MakeIntFieldConstructor,
-	"DateTimeConstructor":    MakeDateTimeFieldConstructor,
-	"DateConstructor":        MakeDateFieldConstructor,
 	"UnixTimeConstructor":    MakeUnixTimeFieldConstructor,
 }
 

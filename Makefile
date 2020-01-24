@@ -22,6 +22,7 @@ lint:
 		-D gochecknoinits \
 		-D godox \
 		-D lll \
+		-D gomnd \
 		-D nakedret \
 		-D wsl \
 		./...
