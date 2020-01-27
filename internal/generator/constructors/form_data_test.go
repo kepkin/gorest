@@ -68,3 +68,42 @@ func MakeUserProfileRequestBodyForm(c *gin.Context) (result UserProfileRequestBo
 }
 `, prettyResult.String())
 }
+
+func TestMakeFormDataConstructorForOneFileField(t *testing.T) {
+	def := translator.TypeDef{
+		Name: "UploadDocumentRequestBodyForm",
+		Fields: []translator.Field{
+			{Name: "Document", GoType: "*multipart.FileHeader", Parameter: "document", Type: translator.FileField},
+		},
+	}
+
+	b := &strings.Builder{}
+	if !assert.NoError(t, MakeFormDataConstructor(b, def)) {
+		return
+	}
+	result := strings.NewReader("package api\n" + b.String())
+
+	prettyResult := &strings.Builder{}
+	if !assert.NoError(t, barber.PrettifySource(result, prettyResult)) {
+		return
+	}
+
+	assert.Equal(t, `package api
+
+func MakeUploadDocumentRequestBodyForm(c *gin.Context) (result UploadDocumentRequestBodyForm, errors []FieldError) {
+	var err error
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		errors = append(errors, NewFieldError(InFormData, "", "can't parse multipart form", err))
+		return
+	}
+
+	result.Document, err = c.FormFile("document")
+	if err != nil {
+		errors = append(errors, NewFieldError(InFormData, "document", "can't extract file from form-data", err))
+	}
+	return
+}
+`, prettyResult.String())
+}

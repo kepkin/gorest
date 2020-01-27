@@ -48,6 +48,15 @@ func (d TypeDef) HasNoStringFields() bool {
 	return false
 }
 
+func (d TypeDef) HasNoFileFields() bool {
+	for _, f := range d.Fields {
+		if f.Type != FileField {
+			return true
+		}
+	}
+	return false
+}
+
 // Field represents struct field
 type Field struct {
 	Name      string    // UserID
