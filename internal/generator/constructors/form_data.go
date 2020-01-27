@@ -20,12 +20,13 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{ end }}
 	
 	{{- with .Fields }}
+	{{ if $.HasNoFileFields }}
 		form, err := c.MultipartForm()
 		if err != nil {
 			errors = append(errors, NewFieldError(InFormData, "", "can't parse multipart form", err))
 			return
 		}
-		{{ if $.HasNoFileFields }}
+		
 		getFormValue := func(param string) (string, bool) {
 			values, ok := form.Value[param]
 			if !ok {
@@ -36,7 +37,7 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 			}
 			return values[0], true
 		}
-		{{ end }}
+	{{ end }}
 	{{- end }}
 
 	{{ range $, $field := .Fields }}

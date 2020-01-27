@@ -93,12 +93,6 @@ func TestMakeFormDataConstructorForOneFileField(t *testing.T) {
 func MakeUploadDocumentRequestBodyForm(c *gin.Context) (result UploadDocumentRequestBodyForm, errors []FieldError) {
 	var err error
 
-	form, err := c.MultipartForm()
-	if err != nil {
-		errors = append(errors, NewFieldError(InFormData, "", "can't parse multipart form", err))
-		return
-	}
-
 	result.Document, err = c.FormFile("document")
 	if err != nil {
 		errors = append(errors, NewFieldError(InFormData, "document", "can't extract file from form-data", err))
