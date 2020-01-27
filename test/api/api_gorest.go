@@ -382,7 +382,15 @@ func MakeProvidePaymentRequest(c *gin.Context) (result ProvidePaymentRequest, er
 }
 
 func MakeProvidePaymentRequestBody(c *gin.Context) (result ProvidePaymentRequestBody, errors []FieldError) {
-	switch c.Request.Header.Get("Content-Type") {
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
+
+	switch contentType {
 	case "application/json":
 		result.Type = AppJSON
 		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
