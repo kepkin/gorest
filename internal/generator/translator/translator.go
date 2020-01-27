@@ -21,6 +21,7 @@ const (
 	CustomField
 	DateField
 	DateTimeField
+	FileField
 	FloatField
 	FreeFormObject
 	IntegerField
@@ -76,6 +77,10 @@ func (f Field) IsCustom() bool {
 	return f.Type == CustomField
 }
 
+func (f Field) IsArray() bool {
+	return f.Type == ArrayField
+}
+
 func (f Field) IsString() bool {
 	return f.Type == StringField
 }
@@ -98,6 +103,10 @@ func (f Field) IsDateTime() bool {
 
 func (f Field) IsUnixTime() bool {
 	return f.Type == UnixTimeField
+}
+
+func (f Field) IsFile() bool {
+	return f.Type == FileField
 }
 
 func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
@@ -297,6 +306,10 @@ func determineType(parentName string, schema openapi3.SchemaType, parameter stri
 		goType := "string"
 
 		switch schema.Format {
+		case openapi3.Binary:
+			fieldType = FileField
+			goType = "*multipart.FileHeader"
+
 		case openapi3.Date:
 			fieldType = DateField
 			goType = "time.Time" //nolint:goconst
@@ -327,6 +340,8 @@ func MakeIdentifier(s string) string {
 	result := strcase.ToCamel(strings.ReplaceAll(s, " ", "_"))
 
 	for _, suff := range [...]string{
+		"Api",
+		"Edo",
 		"Db",
 		"Http",
 		"Id",

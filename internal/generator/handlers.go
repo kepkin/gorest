@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+	"strings"
 	"text/template"
 
 	"github.com/kepkin/gorest/internal/generator/constructors"
@@ -42,7 +43,7 @@ func (g *Generator) makeHandlers(wr io.Writer, sp openapi3.Spec) error {
 
 type s = openapi3.SchemaType
 
-func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *openapi3.PathSpec) (s, error) {
+func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *openapi3.PathSpec) (s, error) { //nolint:gocyclo,gocognit
 	if _, err := fmt.Fprintf(wr, "\n// _%s_%s_Handler\n", interfaceName, method.OperationID); err != nil {
 		return s{}, err
 	}
@@ -91,6 +92,10 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 				body.Properties["JSON"] = content.Schema
 			case "application/xml":
 				body.Properties["XML"] = content.Schema
+			case "multipart/form-data":
+				schema := *content.Schema
+				schema.Type = openapi3.ObjectType
+				body.Properties["Form"] = &schema
 			default:
 				return request, fmt.Errorf("unsupported content type: %s", mimeType)
 			}
@@ -127,12 +132,20 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		return s{}, err
 	}
 
+	var formDataDef *translator.TypeDef
+	for i, d := range defs {
+		if strings.HasSuffix(d.Name, "RequestBodyForm") {
+			formDataDef = &defs[i]
+			break
+		}
+	}
+
 	type SchemaConstructorPair struct {
 		Params      *openapi3.SchemaType
 		Constructor func(io.Writer, translator.TypeDef) error
 	}
 
-	for _, e := range []SchemaConstructorPair{
+	for i, e := range []SchemaConstructorPair{
 		{&body, constructors.MakeBodyConstructor},
 		{&headerParams, constructors.MakeHeaderParamsConstructor},
 		{&cookieParams, constructors.MakeCookieParamsConstructor},
@@ -151,6 +164,13 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		def.Name = defs[0].Name + def.Name
 		if err := e.Constructor(wr, def); err != nil {
 			return s{}, err
+		}
+
+		// MakeBodyConstructor
+		if i == 0 && formDataDef != nil {
+			if err := constructors.MakeFormDataConstructor(wr, *formDataDef); err != nil {
+				return s{}, err
+			}
 		}
 	}
 

@@ -23,7 +23,15 @@ func TestMakeBodyConstructor(t *testing.T) {
 		assertGeneratedCode(t, def, `package api
 
 func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []FieldError) {
-	switch c.Request.Header.Get("Content-Type") {
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
+
+	switch contentType {
 	case "application/json":
 		result.Type = AppJSON
 		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
@@ -51,7 +59,15 @@ func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []F
 		assertGeneratedCode(t, def, `package api
 
 func MakeIncomeRequestBody(c *gin.Context) (result IncomeRequestBody, errors []FieldError) {
-	switch c.Request.Header.Get("Content-Type") {
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
+
+	switch contentType {
 	case "application/json":
 		result.Type = AppJSON
 		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {

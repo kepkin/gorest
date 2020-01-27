@@ -5,7 +5,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -19,6 +21,7 @@ const (
 	UndefinedPlace ParamPlace = iota
 	InBody
 	InCookie
+	InFormData
 	InHeader
 	InPath
 	InQuery
@@ -31,6 +34,7 @@ const (
 	AppJSON
 	AppXML
 	AppFormUrlencoded
+	MultipartFormData
 	TextPlain
 )
 
@@ -54,10 +58,19 @@ type PaymentGatewayAPI interface {
 	// GET /v1/example/:year/:user
 	Example(in ExampleRequest, c *gin.Context)
 
+	// GET /v1/files/:filename
+	GetFile(in GetFileRequest, c *gin.Context)
+
 	// GET /v1/payment
 	GetPayment(in GetPaymentRequest, c *gin.Context)
 	// POST /v1/payment
 	ProvidePayment(in ProvidePaymentRequest, c *gin.Context)
+
+	// POST /v1/user
+	CreateUser(in CreateUserRequest, c *gin.Context)
+
+	// GET /v1/user/:userId
+	GetUser(in GetUserRequest, c *gin.Context)
 
 	// Service methods
 	ProcessMakeRequestErrors(c *gin.Context, errors []FieldError)
@@ -203,6 +216,61 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_Example_Handler(c *gin.
 	server.Srv.Example(req, c)
 }
 
+// _PaymentGatewayAPI_GetFile_Handler
+
+type GetFileRequest struct {
+	Path GetFileRequestPath
+}
+
+func (t GetFileRequest) Validate() (errors []FieldError) {
+	// Path field validators
+	errors = t.Path.Validate()
+	if errors != nil {
+		return
+	}
+	return
+}
+
+type GetFileRequestPath struct {
+	Filename string
+}
+
+func (t GetFileRequestPath) Validate() (errors []FieldError) {
+	// Filename field validators
+	return
+}
+
+func MakeGetFileRequest(c *gin.Context) (result GetFileRequest, errors []FieldError) {
+	result.Path, errors = MakeGetFileRequestPath(c)
+	if errors != nil {
+		return
+	}
+	return
+}
+
+func MakeGetFileRequestPath(c *gin.Context) (result GetFileRequestPath, errors []FieldError) {
+	result.Filename, _ = c.Params.Get("filename")
+	return
+}
+
+func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetFile_Handler(c *gin.Context) {
+	c.Set(handlerNameKey, "GetFile")
+
+	req, errors := MakeGetFileRequest(c)
+	if len(errors) > 0 {
+		server.Srv.ProcessMakeRequestErrors(c, errors)
+		return
+	}
+
+	errors = req.Validate()
+	if len(errors) > 0 {
+		server.Srv.ProcessValidateErrors(c, errors)
+		return
+	}
+
+	server.Srv.GetFile(req, c)
+}
+
 // _PaymentGatewayAPI_GetPayment_Handler
 
 type GetPaymentRequest struct {
@@ -345,14 +413,205 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_ProvidePayment_Handler(
 	server.Srv.ProvidePayment(req, c)
 }
 
+// _PaymentGatewayAPI_CreateUser_Handler
+
+type CreateUserRequest struct {
+	Body CreateUserRequestBody
+}
+
+func (t CreateUserRequest) Validate() (errors []FieldError) {
+	// Body field validators
+	errors = t.Body.Validate()
+	if errors != nil {
+		return
+	}
+	return
+}
+
+type CreateUserRequestBody struct {
+	Form CreateUserRequestBodyForm
+	Type ContentType
+}
+
+func (t CreateUserRequestBody) Validate() (errors []FieldError) {
+	// Form field validators
+	errors = t.Form.Validate()
+	if errors != nil {
+		return
+	}
+	return
+}
+
+type CreateUserRequestBodyForm struct {
+	Age    int64
+	Avatar *multipart.FileHeader
+	Email  string
+	Name   string
+}
+
+func (t CreateUserRequestBodyForm) Validate() (errors []FieldError) {
+	// Age field validators
+	// Avatar field validators
+	// Email field validators
+	// Name field validators
+	return
+}
+
+func MakeCreateUserRequest(c *gin.Context) (result CreateUserRequest, errors []FieldError) {
+	result.Body, errors = MakeCreateUserRequestBody(c)
+	if errors != nil {
+		return
+	}
+	return
+}
+
+func MakeCreateUserRequestBody(c *gin.Context) (result CreateUserRequestBody, errors []FieldError) {
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
+
+	switch contentType {
+	case "multipart/form-data":
+		result.Type = MultipartFormData
+		result.Form, errors = MakeCreateUserRequestBodyForm(c)
+		if errors != nil {
+			return
+		}
+
+	default:
+		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
+	}
+	return
+}
+
+func MakeCreateUserRequestBodyForm(c *gin.Context) (result CreateUserRequestBodyForm, errors []FieldError) {
+	var err error
+
+	form, err := c.MultipartForm()
+	if err != nil {
+		errors = append(errors, NewFieldError(InFormData, "", "can't parse multipart form", err))
+		return
+	}
+
+	getFormValue := func(param string) (string, bool) {
+		values, ok := form.Value[param]
+		if !ok {
+			return "", false
+		}
+		if len(values) == 0 {
+			return "", false
+		}
+		return values[0], true
+	}
+
+	ageStr, _ := getFormValue("age")
+	result.Age, err = strconv.ParseInt(ageStr, 10, 0)
+	if err != nil {
+		errors = append(errors, NewFieldError(InFormData, "age", "can't parse as integer", err))
+	}
+
+	result.Avatar, err = c.FormFile("avatar")
+	if err != nil {
+		errors = append(errors, NewFieldError(InFormData, "avatar", "can't extract file from form-data", err))
+	}
+
+	result.Email, _ = getFormValue("email")
+
+	result.Name, _ = getFormValue("name")
+	return
+}
+
+func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_CreateUser_Handler(c *gin.Context) {
+	c.Set(handlerNameKey, "CreateUser")
+
+	req, errors := MakeCreateUserRequest(c)
+	if len(errors) > 0 {
+		server.Srv.ProcessMakeRequestErrors(c, errors)
+		return
+	}
+
+	errors = req.Validate()
+	if len(errors) > 0 {
+		server.Srv.ProcessValidateErrors(c, errors)
+		return
+	}
+
+	server.Srv.CreateUser(req, c)
+}
+
+// _PaymentGatewayAPI_GetUser_Handler
+
+type GetUserRequest struct {
+	Path GetUserRequestPath
+}
+
+func (t GetUserRequest) Validate() (errors []FieldError) {
+	// Path field validators
+	errors = t.Path.Validate()
+	if errors != nil {
+		return
+	}
+	return
+}
+
+type GetUserRequestPath struct {
+	UserID string
+}
+
+func (t GetUserRequestPath) Validate() (errors []FieldError) {
+	// UserID field validators
+	return
+}
+
+func MakeGetUserRequest(c *gin.Context) (result GetUserRequest, errors []FieldError) {
+	result.Path, errors = MakeGetUserRequestPath(c)
+	if errors != nil {
+		return
+	}
+	return
+}
+
+func MakeGetUserRequestPath(c *gin.Context) (result GetUserRequestPath, errors []FieldError) {
+	result.UserID, _ = c.Params.Get("userId")
+	return
+}
+
+func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetUser_Handler(c *gin.Context) {
+	c.Set(handlerNameKey, "GetUser")
+
+	req, errors := MakeGetUserRequest(c)
+	if len(errors) > 0 {
+		server.Srv.ProcessMakeRequestErrors(c, errors)
+		return
+	}
+
+	errors = req.Validate()
+	if len(errors) > 0 {
+		server.Srv.ProcessValidateErrors(c, errors)
+		return
+	}
+
+	server.Srv.GetUser(req, c)
+}
+
 // Router
 func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 	e := &PaymentGatewayAPIServer{api}
 
 	r.Handle("GET", "/v1/example/:year/:user", e._PaymentGatewayAPI_Example_Handler)
 
+	r.Handle("GET", "/v1/files/:filename", e._PaymentGatewayAPI_GetFile_Handler)
+
 	r.Handle("GET", "/v1/payment", e._PaymentGatewayAPI_GetPayment_Handler)
 	r.Handle("POST", "/v1/payment", e._PaymentGatewayAPI_ProvidePayment_Handler)
+
+	r.Handle("POST", "/v1/user", e._PaymentGatewayAPI_CreateUser_Handler)
+
+	r.Handle("GET", "/v1/user/:userId", e._PaymentGatewayAPI_GetUser_Handler)
 }
 
 type ID string

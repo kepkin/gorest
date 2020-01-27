@@ -98,6 +98,69 @@ paths:
         '200':
           description: OK
 
+  /v1/user/:userId:
+    get:
+      summary: 'Get user data'
+      operationId: GetUser
+
+      parameters:
+        - name: userId
+          in: path
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: OK
+
+  /v1/user:
+    post:
+      summary: 'Create user'
+      operationId: CreateUser
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                age:
+                  type: integer
+                avatar:
+                  type: string
+                  format: binary
+
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    $ref: '#/components/schemas/ID'
+
+  /v1/files/:filename:
+    get:
+      summary: 'Get file by name'
+      operationId: GetFile
+
+      parameters:
+        - name: filename
+          in: path
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: OK
+
 components:
   schemas:
     Payment:

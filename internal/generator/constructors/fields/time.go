@@ -14,7 +14,7 @@ if err != nil {
 }`))
 
 func MakeDateFieldConstructor(f translator.Field, place string) (string, error) {
-	if !(f.Type == translator.DateField) {
+	if f.Type != translator.DateField {
 		return "", fmt.Errorf("%v isn't date field", f)
 	}
 	return executeFieldConstructorTemplate(dateFieldTemplate, f, place)
@@ -27,7 +27,7 @@ if err != nil {
 }`))
 
 func MakeDateTimeFieldConstructor(f translator.Field, place string) (string, error) {
-	if !(f.Type == translator.DateTimeField) {
+	if f.Type != translator.DateTimeField {
 		return "", fmt.Errorf("%v isn't datetime field", f)
 	}
 	return executeFieldConstructorTemplate(dateTimeFieldTemplate, f, place)

@@ -22,6 +22,7 @@ const (
 	NumberFloat  Format = "float"
 	NumberDouble Format = "double"
 
+	Binary   Format = "binary"
 	Date     Format = "date"
 	DateTime Format = "date-time"
 	UnixTime Format = "unix-time"
