@@ -120,10 +120,10 @@ type SchemaType struct {
 	Title       string
 	Description string
 	Enum        []string
-	// TODO(a.telyshev) Default
-	Format     Format
-	Type       Type
-	IsNullable bool `yaml:"nullable"`
+	Default     string
+	Format      Format
+	Type        Type
+	IsNullable  bool `yaml:"nullable"`
 
 	Ref string `yaml:"$ref"`
 

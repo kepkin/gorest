@@ -118,6 +118,10 @@ func (f Field) IsFile() bool {
 	return f.Type == FileField
 }
 
+func (f Field) CheckDefault() bool {
+	return f.Schema.Default != ""
+}
+
 func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {
 	queue := list.New()
 	queue.PushBack(schema)

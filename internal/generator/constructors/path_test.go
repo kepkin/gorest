@@ -1,6 +1,7 @@
 package constructors
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestMakePathParamsConstructor(t *testing.T) {
 		Name: "IncomeRequestPath",
 		Fields: []translator.Field{
 			{Name: "UserID", GoType: "int64", Parameter: "user_id", Type: translator.IntegerField},
-			{Name: "Role", GoType: "string", Parameter: "role", Type: translator.StringField},
+			{Name: "Role", GoType: "string", Parameter: "role", Type: translator.StringField, Schema: openapi3.SchemaType{Default: "admin"}},
 			{Name: "Time", GoType: "Timestamp", Parameter: "time", Type: translator.CustomField},
 		},
 	}
@@ -42,7 +43,10 @@ func MakeIncomeRequestPath(c *gin.Context) (result IncomeRequestPath, errors []F
 		errors = append(errors, NewFieldError(InPath, "user_id", "can't parse as integer", err))
 	}
 
-	result.Role, _ = c.Params.Get("role")
+	result.Role, ok = c.Params.Get("role")
+	if !ok {
+		result.Role = "admin"
+	}
 
 	timeStr, _ := c.Params.Get("time")
 	result.Time = Timestamp{}

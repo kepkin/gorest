@@ -13,7 +13,7 @@ func MakeHeaderParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return headerParamsConstructorTemplate.Execute(wr, def)
 }
 
-var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(fields.Constructors).Parse(`
+var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -21,42 +21,29 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		
 		{{- if .IsString }}
-			result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
+			{{- if .CheckDefault}}
+				result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
+				if result.{{ .Name }} == "" {
+					result.{{ .Name }} = "{{ .Schema.Default }}"
+				}
+			{{ else }}
+				result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
+			{{- end }}
+		{{- else if or (.IsCustom)  (.IsInteger)  (.IsFloat)  (.IsDate)  (.IsDateTime)  (.IsUnixTime)}}
+			 {{- if .CheckDefault}}
+				{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
+				if {{ .StrVarName }} != "" {
+				   {{ .StrVarName }} = "{{ .Schema.Default }}"
+				}
+			 {{ else }}
+				{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
+			 {{- end }}
 		{{- end }}
 
-		{{- if .IsCustom }}
-			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InHeader" }}
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InHeader" }}
 
-		{{- if .IsInteger }}
-			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ IntConstructor . "InHeader" }}
-		{{- end }}
-
-		{{- if .IsFloat }}
-			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ FloatConstructor . "InHeader" }}
-		{{- end }}
-
-		{{- if or .IsDate .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InHeader" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InHeader" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InHeader" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }

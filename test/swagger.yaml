@@ -16,6 +16,12 @@ paths:
       operationId: Example
 
       parameters:
+        - name: test
+          in: query
+          schema:
+            type: string
+            default: testing
+
         - name: year
           in: path
           schema:

@@ -13,7 +13,7 @@ func MakeQueryParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return queryParamsConstructorTemplate.Execute(wr, def)
 }
 
-var queryParamsConstructorTemplate = template.Must(template.New("queryParamsConstructor").Funcs(fields.Constructors).Parse(`
+var queryParamsConstructorTemplate = template.Must(template.New("queryParamsConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -21,42 +21,29 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		
 		{{- if .IsString }}
-			result.{{ .Name }}, _ = c.GetQuery("{{ .Parameter }}")
+			{{- if .CheckDefault}}
+				result.{{ .Name }}, ok = c.GetQuery("{{ .Parameter }}")
+				if !ok {
+					result.{{ .Name }} = "{{ .Schema.Default }}"
+				}
+			{{ else }}
+				result.{{ .Name }}, _ = c.GetQuery("{{ .Parameter }}")
+			{{- end }}
+		{{- else if or (.IsCustom)  (.IsInteger)  (.IsFloat)  (.IsDate)  (.IsDateTime)  (.IsUnixTime)}}
+			 {{- if .CheckDefault}}
+				{{ .StrVarName }}, ok := c.GetQuery("{{ .Parameter }}")
+				if !ok {
+				   {{ .StrVarName }} = "{{ .Schema.Default }}"
+				}
+			 {{ else }}
+				{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
+			 {{- end }}
 		{{- end }}
 
-		{{- if .IsCustom }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InQuery" }}
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InQuery" }}
 
-		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ IntConstructor . "InQuery" }}
-		{{- end }}
-
-		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ FloatConstructor . "InQuery" }}
-		{{- end }}
-
-		{{- if .IsDate }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ DateConstructor . "InQuery" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InQuery" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InQuery" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }

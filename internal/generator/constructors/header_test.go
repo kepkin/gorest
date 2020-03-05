@@ -1,6 +1,7 @@
 package constructors
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"testing"
 
@@ -15,7 +16,7 @@ func TestMakeHeaderParamsConstructor(t *testing.T) {
 		Name: "IncomeRequestHeaders",
 		Fields: []translator.Field{
 			{Name: "XAccessToken", GoType: "string", Parameter: "X-Access-Token", Type: translator.StringField},
-			{Name: "XConsumerID", GoType: "int64", Parameter: "X-Consumer-ID", Type: translator.IntegerField},
+			{Name: "XConsumerID", GoType: "int64", Parameter: "X-Consumer-ID", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: "1"}},
 		},
 	}
 
@@ -38,6 +39,10 @@ func MakeIncomeRequestHeaders(c *gin.Context) (result IncomeRequestHeaders, erro
 	result.XAccessToken = c.Request.Header.Get("X-Access-Token")
 
 	xConsumerIDStr := c.Request.Header.Get("X-Consumer-ID")
+	if xConsumerIDStr != "" {
+		xConsumerIDStr = "1"
+	}
+
 	result.XConsumerID, err = strconv.ParseInt(xConsumerIDStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InHeader, "X-Consumer-ID", "can't parse as integer", err))

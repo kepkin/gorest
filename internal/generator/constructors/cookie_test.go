@@ -1,6 +1,7 @@
 package constructors
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"testing"
 
@@ -14,8 +15,8 @@ func TestMakeCookieParamsConstructor(t *testing.T) {
 	def := translator.TypeDef{
 		Name: "IncomeRequestCookie",
 		Fields: []translator.Field{
-			{Name: "SessionID", GoType: "string", Parameter: "sessionID", Type: translator.StringField},
-			{Name: "MaxAge", GoType: "int64", Parameter: "Max-Age", Type: translator.IntegerField},
+			{Name: "SessionID", GoType: "string", Parameter: "sessionID", Type: translator.StringField, Schema: openapi3.SchemaType{Default: "id session"}},
+			{Name: "MaxAge", GoType: "int64", Parameter: "Max-Age", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: "22"}},
 			{Name: "Domain", GoType: "string", Parameter: "Domain", Type: translator.StringField},
 		},
 	}
@@ -44,9 +45,16 @@ func MakeIncomeRequestCookie(c *gin.Context) (result IncomeRequestCookie, errors
 		return cookie.Value, true
 	}
 
-	result.SessionID, _ = getCookie("sessionID")
+	result.SessionID, ok = getCookie("sessionID")
+	if !ok {
+		result.SessionID = "id session"
+	}
 
-	maxAgeStr, _ := getCookie("Max-Age")
+	maxAgeStr, ok := getCookie("Max-Age")
+	if !ok {
+		maxAgeStr = "22"
+	}
+
 	result.MaxAge, err = strconv.ParseInt(maxAgeStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InCookie, "Max-Age", "can't parse as integer", err))
