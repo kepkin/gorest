@@ -1,7 +1,6 @@
 package constructors
 
 import (
-	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"testing"
 
@@ -9,6 +8,7 @@ import (
 
 	"github.com/kepkin/gorest/internal/barber"
 	"github.com/kepkin/gorest/internal/generator/translator"
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
 func TestMakeHeaderParamsConstructor(t *testing.T) {

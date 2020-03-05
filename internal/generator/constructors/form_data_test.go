@@ -1,13 +1,14 @@
 package constructors
 
 import (
-	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/kepkin/gorest/internal/barber"
 	"github.com/kepkin/gorest/internal/generator/translator"
-	"github.com/stretchr/testify/assert"
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
 func TestMakeFormDataConstructor(t *testing.T) {
