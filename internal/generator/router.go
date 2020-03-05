@@ -5,10 +5,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kepkin/gorest/internal/spec/openapi3"
-
 	"github.com/Masterminds/sprig"
-	"github.com/kepkin/gorest/internal/generator/translator"
+
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
 var routerTemplate = template.Must(template.New("router").Funcs(sprig.GenericFuncMap()).Funcs(template.FuncMap{
@@ -45,7 +44,7 @@ func (Generator) makeRouter(wr io.Writer, sp openapi3.Spec) error {
 		InterfaceName string
 		Paths         openapi3.PathMap
 	}{
-		InterfaceName: translator.MakeIdentifier(sp.Info.Title),
+		InterfaceName: MakeIdentifier(sp.Info.Title),
 		Paths:         sp.Paths,
 	})
 }

@@ -19,6 +19,9 @@ func GenerateFromFile(swaggerPath string, packageName string, wr io.Writer) erro
 		return err
 	}
 
-	g := generator.NewGenerator(packageName)
+
+	translator := MakeTranslator()
+
+	g := generator.NewGenerator(packageName, translator)
 	return g.Generate(wr, sp)
 }

@@ -8,14 +8,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kepkin/gorest/internal/generator/constructors"
-
-	"github.com/kepkin/gorest/internal/generator/translator"
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
 func (g *Generator) makeHandlers(wr io.Writer, sp openapi3.Spec) error {
-	interfaceName := translator.MakeIdentifier(sp.Info.Title)
+	interfaceName := MakeIdentifier(sp.Info.Title)
 
 	sortedPaths := make([]string, 0, len(sp.Paths))
 	for k := range sp.Paths {
@@ -28,7 +25,7 @@ func (g *Generator) makeHandlers(wr io.Writer, sp openapi3.Spec) error {
 		path := sp.Paths[pathKey]
 		for _, method := range path.Methods() {
 			if method != nil {
-				root, err := g.makeRequest(wr, interfaceName, method)
+				root, err := g.makeRequestObject(wr, interfaceName, method)
 				if err != nil {
 					return err
 				}
@@ -41,32 +38,38 @@ func (g *Generator) makeHandlers(wr io.Writer, sp openapi3.Spec) error {
 	return nil
 }
 
-type s = openapi3.SchemaType
-
-func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *openapi3.PathSpec) (s, error) { //nolint:gocyclo,gocognit
+// From PathSpec generates openapi schema for creating a request struct
+func (g *Generator) makeRequestObject(wr io.Writer, interfaceName string, method *openapi3.PathSpec) (openapi3.SchemaType, error) { //nolint:gocyclo,gocognit
 	if _, err := fmt.Fprintf(wr, "\n// _%s_%s_Handler\n", interfaceName, method.OperationID); err != nil {
-		return s{}, err
+		return openapi3.SchemaType{}, err
 	}
 
 	// Make and fill root request schema
 	request := openapi3.NewObjectSchema(method.OperationID + "Request")
 
-	queryParams := openapi3.NewObjectSchema("")
-	pathParams := openapi3.NewObjectSchema("")
-	cookieParams := openapi3.NewObjectSchema("")
-	headerParams := openapi3.NewObjectSchema("")
-	body := openapi3.NewObjectSchema("")
+	queryParams := openapi3.NewObjectSchema(method.OperationID + "RequestQuery")
+	pathParams := openapi3.NewObjectSchema(method.OperationID + "RequestPath")
+	cookieParams := openapi3.NewObjectSchema(method.OperationID + "RequestCookie")
+	headerParams := openapi3.NewObjectSchema(method.OperationID + "RequestHeader")
+	body := openapi3.NewObjectSchema(method.OperationID + "RequestBody")
 
 	for _, param := range method.Parameters {
+		addProperty := func(obj *openapi3.SchemaType, parameter openapi3.ParameterType) {
+			obj.Properties[parameter.Name] = parameter.Schema
+			if parameter.Required  {
+				obj.Required = append(obj.Required, parameter.Name)
+			}
+		}
+
 		switch param.In {
 		case "query":
-			queryParams.Properties[param.Name] = param.Schema
+			addProperty(&queryParams, param)
 		case "path":
-			pathParams.Properties[param.Name] = param.Schema
+			addProperty(&pathParams, param)
 		case "cookie":
-			cookieParams.Properties[param.Name] = param.Schema
+			addProperty(&cookieParams, param)
 		case "header":
-			headerParams.Properties[param.Name] = param.Schema
+			addProperty(&headerParams, param)
 		default:
 			return request, fmt.Errorf("unknown param place: %s", param.In)
 		}
@@ -82,14 +85,16 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 		request.Properties["Cookie"] = &cookieParams
 	}
 	if len(headerParams.Properties) > 0 {
-		request.Properties["Headers"] = &headerParams
+		request.Properties["Header"] = &headerParams
 	}
 
 	if method.RequestBody != nil {
 		for mimeType, content := range method.RequestBody.Content {
 			switch mimeType {
 			case "application/json":
-				body.Properties["JSON"] = content.Schema
+				schema := *content.Schema
+				schema.Type = openapi3.ObjectType
+				body.Properties["JSON"] = &schema
 			case "application/xml":
 				body.Properties["XML"] = content.Schema
 			case "multipart/form-data":
@@ -109,100 +114,141 @@ func (g *Generator) makeRequest(wr io.Writer, interfaceName string, method *open
 	}
 
 	// Determine definitions
-	defs, err := translator.ProcessRootSchema(request)
-	if err != nil {
-		return s{}, err
-	}
-
-	// Make structs
-	for _, d := range defs {
-		if err := g.makeStruct(wr, d, false); err != nil {
-			return s{}, err
-		}
-
-		if len(d.Fields) != 0 {
-			if err = g.makeValidateFunc(wr, d); err != nil {
-				return s{}, err
-			}
-		}
-	}
-
-	rootDef := defs[0]
-	if err := constructors.MakeRequestConstructor(wr, rootDef); err != nil {
-		return s{}, err
-	}
-
-	var formDataDef *translator.TypeDef
-	for i, d := range defs {
-		if strings.HasSuffix(d.Name, "RequestBodyForm") {
-			formDataDef = &defs[i]
-			break
-		}
-	}
-
-	type SchemaConstructorPair struct {
-		Params      *openapi3.SchemaType
-		Constructor func(io.Writer, translator.TypeDef) error
-	}
-
-	for i, e := range []SchemaConstructorPair{
-		{&body, constructors.MakeBodyConstructor},
-		{&headerParams, constructors.MakeHeaderParamsConstructor},
-		{&cookieParams, constructors.MakeCookieParamsConstructor},
-		{&pathParams, constructors.MakePathParamsConstructor},
-		{&queryParams, constructors.MakeQueryParamsConstructor},
+	for _, obj := range []openapi3.SchemaType{
+		request,
+		//queryParams,
+		//cookieParams,
+		//pathParams,
+		//headerParams,
+		//body,
 	} {
-		if len(e.Params.Properties) == 0 {
-			continue
-		}
-
-		def, err := translator.ProcessObjSchema(*e.Params, list.New())
+		d1, err := g.MakeTypeDefFromOpenAPIObject(obj, list.New())
 		if err != nil {
-			return s{}, err
+			return openapi3.SchemaType{}, err
 		}
 
-		def.Name = defs[0].Name + def.Name
-		if err := e.Constructor(wr, def); err != nil {
-			return s{}, err
+		//Make struct
+		definition, err := d1.BuildDefinition()
+		if err != nil {
+			return openapi3.SchemaType{}, err
 		}
-
-		// MakeBodyConstructor
-		if i == 0 && formDataDef != nil {
-			if err := constructors.MakeFormDataConstructor(wr, *formDataDef); err != nil {
-				return s{}, err
-			}
-		}
+		wr.Write([]byte(definition))
 	}
 
 	return request, nil
 }
 
-var handlerTemplate = template.Must(template.New("handler").Parse(`
-func (server {{ .InterfaceName }}Server) _{{ .InterfaceName }}_{{ .Path.OperationID }}_Handler(c *gin.Context) {
-	c.Set(handlerNameKey, "{{ .Path.OperationID }}")
-	
-	{{ with .Request.Properties }}
-	req, errors := Make{{ $.Path.OperationID }}Request(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
-		return
+var funcMap = template.FuncMap{
+"ToUpper": strings.ToUpper,
+"Title": strings.Title,
+"MakeIdentifier": MakeIdentifier,
+"MakeFormatIdentifier": MakeFormatIdentifier,
+}
+
+var ginGlobalTemplate = template.Must(template.New("handler").Funcs(funcMap).Parse(`
+func ginGetCookie(c *gin.Context, param string) (string, bool) {
+	cookie, err := c.Request.Cookie(param)
+	if err == http.ErrNoCookie {
+		return "", false
+	}
+	return cookie.Value, true
+}
+
+func __gin_get_parameter(c *gin.Context, in string, parameterName string) ([]string, bool, error) {
+	if in == "cookie" {
+		data, existed := ginGetCookie(c, parameterName)
+		return []string{data}, existed, nil
+	} else if in == "header" {
+		data := c.Request.Header.Get(parameterName)
+		return []string{data}, len(data) != 0, nil
+	} else if in == "path" {
+		data, existed := c.Params.Get(parameterName)
+		return []string{data}, existed, nil
+	} else if in == "query" {
+		data, existed := c.Request.URL.Query()[parameterName]
+		return data, existed, nil
+	} else if in == "body" {
+		data, existed := c.GetPostFormArray(parameterName)
+		if existed == false && c.Request.MultipartForm != nil && c.Request.MultipartForm.File != nil { 
+			fhs, ok := c.Request.MultipartForm.File[parameterName]
+			if !ok {
+				return []string{}, ok, nil
+			}
+			
+			return []string{fhs[0].Filename}, ok, nil
+		}
+
+		return data, existed, nil
 	}
 
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
-		return
-	}
-
-	server.Srv.{{ $.Path.OperationID }}(req, c)
-	{{- else -}}
-	server.Srv.{{ $.Path.OperationID }}({{ $.Path.OperationID }}Request{}, c)
-	{{- end }}
+	return []string{}, false, fmt.Errorf("Unsupported 'in': %v", in)
 }
 `))
 
+//TODO: support for getting body from ginGenerator
+var handlerTemplate = template.Must(template.New("handler").Funcs(funcMap).Parse(`
+func (server {{ .InterfaceName }}Server) _{{ .InterfaceName }}_{{ .Path.OperationID }}_Handler(c *gin.Context) {
+	c.Set(handlerNameKey, "{{ .Path.OperationID }}")
+	
+	var req {{ .Path.OperationID }}Request
+	{{- range .Path.Parameters }}
+		data{{ Title .In }}{{ MakeIdentifier .Name }}, _, err := __gin_get_parameter(c, "{{.In}}", "{{.Name}}")
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(In{{Title .In}}, "-", "", err)})
+			return
+  		}
+		req.{{ Title .In }}.{{ MakeIdentifier .Name }}, err = {{ .Schema.Type }}{{ MakeFormatIdentifier .Schema.Format }}Converter(data{{ Title .In }}{{ MakeIdentifier .Name }})
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(In{{Title .In}}, "-", "", err)})
+			return
+  		}
+	{{- end}}
+
+`))
+
+var handlerTemplateMimeJsonTypeReqBody = template.Must(template.New("handler").Funcs(funcMap).Parse(`
+case "application/json":
+	if err := json.NewDecoder(c.Request.Body).Decode(&req.Body.JSON); err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "can't decode body from JSON", err)})
+		return
+	}
+`))
+
+var handlerTemplateMimeMultiPartFormTypeReqBody = template.Must(template.New("handler").Funcs(funcMap).Parse(`
+case "multipart/form-data":
+{{- with .ContentSpec.Schema }}
+{{ range $propName, $propSchema := .Properties -}}
+	dataBody{{ MakeIdentifier $propName }}, _, err := __gin_get_parameter(c, "body", "{{$propName}}")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+		return
+	}
+	req.Body.Form.{{ MakeIdentifier $propName }}, err = {{ $propSchema.Type }}{{ MakeFormatIdentifier $propSchema.Format }}Converter(dataBody{{ MakeIdentifier $propName }})
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+		return
+	}
+{{ end }}
+{{- end }}
+`))
+
+var handlerTemplateReqBody = template.Must(template.New("handler").Funcs(funcMap).Parse(`
+	{{ with .Path.RequestBody }}
+	contentType := c.Request.Header.Get("Content-Type")
+	
+	if contentType == "" {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "unsupported Content-type", nil)})
+		return
+	}
+	contentType = strings.Split(contentType, ";")[0]
+
+	//TODO: refactor
+	switch contentType  {
+	{{- end}}
+`))
+
 func (Generator) makeHandler(wr io.Writer, interfaceName string, path *openapi3.PathSpec, request openapi3.SchemaType) error {
-	return handlerTemplate.Execute(wr, struct {
+	err := handlerTemplate.Execute(wr, struct {
 		InterfaceName string
 		Path          *openapi3.PathSpec
 		Request       openapi3.SchemaType
@@ -211,4 +257,69 @@ func (Generator) makeHandler(wr io.Writer, interfaceName string, path *openapi3.
 		Path:          path,
 		Request:       request,
 	})
+
+	if err != nil {
+		return err
+	}
+	if path.RequestBody != nil {
+		err = handlerTemplateReqBody.Execute(wr, struct {
+			InterfaceName string
+			Path          *openapi3.PathSpec
+			Request       openapi3.SchemaType
+		}{
+			InterfaceName: interfaceName,
+			Path:          path,
+			Request:       request,
+		})
+
+		if err != nil {
+			return err
+		}
+
+
+	if contentSpec, ok := path.RequestBody.Content[openapi3.MultiPartFormDataMimeType]; ok == true {
+		err := handlerTemplateMimeMultiPartFormTypeReqBody.Execute(wr, struct {
+			InterfaceName string
+			Path          *openapi3.PathSpec
+			Request       openapi3.SchemaType
+			ContentSpec   openapi3.ContentType
+		}{
+			InterfaceName: interfaceName,
+			Path:          path,
+			Request:       request,
+			ContentSpec:   contentSpec,
+		})
+		if err != nil {
+			return err
+		}
+	}
+	if contentSpec, ok := path.RequestBody.Content[openapi3.ApplicationJsonMimeType]; ok == true {
+		err := handlerTemplateMimeJsonTypeReqBody.Execute(wr, struct {
+			InterfaceName string
+			Path          *openapi3.PathSpec
+			Request       openapi3.SchemaType
+			ContentSpec   openapi3.ContentType
+		}{
+			InterfaceName: interfaceName,
+			Path:          path,
+			Request:       request,
+			ContentSpec:   contentSpec,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+
+		_, err = wr.Write([]byte("}\n"))
+
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = wr.Write([]byte(fmt.Sprintf("server.Srv.%v(req, c)\n", path.OperationID)))
+
+	_, err = wr.Write([]byte("}\n"))
+	return err
 }

@@ -1,0 +1,64 @@
+openapi: 3.0.0
+info:
+  title: Payment Gateway API
+  version: v1
+
+servers:
+  - url: https://superhost.ru/
+    description: Production
+
+  - url: http://localhost:8081/
+    description: Develop
+
+paths:
+  /v1/example:
+    get:
+      operationId: Example
+
+      parameters:
+        - name: test
+          in: query
+          required: true
+          schema:
+            type: string
+
+        - name: year
+          in: path
+          schema:
+            type: integer
+            format: int64
+            default: 23
+
+        - name: debug
+          in: query
+          schema:
+            type: boolean
+
+        - name: sum
+          in: query
+          schema:
+            type: integer
+            format: decimal
+            default: 10
+
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: 'date'
+
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: 'date-time'
+
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: 'unix-time'
+
+      responses:
+        '200':
+          description: OK

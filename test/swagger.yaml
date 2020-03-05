@@ -76,12 +76,15 @@ paths:
         - name: id
           description: 'Payment ID'
           in: query
+          required: true
           schema:
             type: string
+
 
         - name: async
           in: query
           schema:
+            default: false
             type: string
             enum:
               - true
@@ -183,9 +186,6 @@ components:
         sum:
           type: number
           format: decimal
-
-        meta:
-          type: object
 
         type:
           type: string
