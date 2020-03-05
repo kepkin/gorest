@@ -65,8 +65,8 @@ func (p *PaymentGatewayAPIImpl) CreateUser(in CreateUserRequest, c *gin.Context)
 		AvatarURL: "",
 	}
 
-	avatarHdr := in.Body.Form.Avatar
-	avatar, err := avatarHdr.Open()
+	avatarFilename := string(in.Body.Form.Avatar)
+	avatar, _, err := c.Request.FormFile("avatar")
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
@@ -77,7 +77,7 @@ func (p *PaymentGatewayAPIImpl) CreateUser(in CreateUserRequest, c *gin.Context)
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
-	p.Files[avatarHdr.Filename] = buf.Bytes()
+	p.Files[avatarFilename] = buf.Bytes()
 
 	c.JSON(http.StatusOK, struct{ ID ID }{id})
 }

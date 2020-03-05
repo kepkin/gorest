@@ -4,7 +4,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/kepkin/gorest/internal/generator/translator"
+	"github.com/kepkin/gorest/internal/translator"
 )
 
 var primitiveTypeTemplate = template.Must(template.New("primitiveType").Parse(`
@@ -13,16 +13,16 @@ type {{ .Name }} {{ .GoType }}
 
 var structTemplate = template.Must(template.New("struct").Parse(`
 type {{ .Name }} struct {
-	{{- range $, $field := .Fields }}
-	{{ $field.Name }} {{ $field.GoType -}}
-	{{ end }}
+	{{- range $, $field := .Fields2 -}}
+	{{ $field.FieldImpl.Name2 }} {{ $field.FieldImpl.GoType }}
+	{{ end -}}
 }
 `))
 
 var structWithJSONTagsTemplate = template.Must(template.New("structWithJSON").Parse(`
 type {{ .Name }} struct {
-	{{- range $, $field := .Fields -}}
-	{{ $field.Name }} {{ $field.GoType -}} ` + "`json:\"" + "{{ $field.Parameter }}\"`" + `
+	{{- range $, $field := .Fields2 -}}
+	{{ $field.FieldImpl.Name2 }} {{ $field.FieldImpl.GoType }}  ` + "`json:\"" + "{{ $field.FieldImpl.Parameter }}\"`" + `
 	{{ end -}}
 }
 `))
@@ -33,9 +33,9 @@ func (g *Generator) makeStruct(wr io.Writer, def translator.TypeDef, withJSONTag
 		return primitiveTypeTemplate.Execute(wr, def)
 	}
 
-	for _, f := range def.Fields {
-		if f.IsCustom() {
-			g.customFields[f.GoType] = f
+	for _, f := range def.Fields2 {
+		if f.FieldImpl.IsCustom() {
+			g.customFields[f.Schema.Name] = f
 		}
 	}
 	if withJSONTags {

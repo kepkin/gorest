@@ -6,17 +6,18 @@ import (
 	"io"
 
 	"github.com/kepkin/gorest/internal/barber"
-	"github.com/kepkin/gorest/internal/generator/translator"
+	"github.com/kepkin/gorest/internal/translator"
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
 type Generator struct {
 	packageName  string
 	customFields customFieldsSet
+	translator   translator.Translator
 }
 
 type typeName = string
-type customFieldsSet map[typeName]translator.Field
+type customFieldsSet map[typeName]translator.FieldPair
 
 func NewGenerator(packageName string) *Generator {
 	return &Generator{
@@ -28,12 +29,32 @@ func NewGenerator(packageName string) *Generator {
 func (g *Generator) Generate(wr io.Writer, sp openapi3.Spec) error {
 	var content bytes.Buffer
 
+	g.translator = MakeTranslator()
+
+	if _, err := fmt.Fprintf(&content, PredefinedHeader, g.packageName); err != nil {
+		return err
+	}
+
+	g.makeImports(&content, []string{
+		"encoding/json",
+		//"encoding/xml",
+		"fmt",
+		//"mime/multipart",
+		"net/http",
+		"strconv",
+		"strings",
+		"time",
+
+		"github.com/gin-gonic/gin",
+	})
+
 	//noinspection GoPrintFunctions
-	if _, err := fmt.Fprintf(&content, Predefined, g.packageName); err != nil {
+	if _, err := fmt.Fprintf(&content, Predefined); err != nil {
 		return err
 	}
 
 	for _, gen := range []func(io.Writer, openapi3.Spec) error{
+		g.makeGlobals,
 		g.makeInterface,
 		g.makeHandlers,
 		g.makeRouter,

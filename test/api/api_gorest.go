@@ -5,12 +5,12 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"mime/multipart"
+	"github.com/gin-gonic/gin"
+	"github.com/shopspring/decimal"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 const handlerNameKey = "handler"
@@ -54,6 +54,135 @@ func NewFieldError(in ParamPlace, f string, msg string, err error) FieldError {
 	}
 }
 
+func booleanConverter(input []string) (bool, error) {
+	if len(input) == 0 {
+		return false, fmt.Errorf("got empty value instead of boolean", input)
+	}
+
+	if len(input) > 1 {
+		return false, fmt.Errorf("got array '%v' instead of boolean", input)
+	}
+
+	switch strings.ToLower(input[0]) {
+	case "1", "true", "t":
+		return true, nil
+	case "0", "false", "f":
+		return false, nil
+	default:
+		return false, fmt.Errorf("can't parse '%v' as boolean", input[0])
+	}
+}
+
+func stringDateConverter(input []string) (time.Time, error) {
+	if len(input) > 1 {
+		return time.Time{}, fmt.Errorf("got array '%v' instead of string", input)
+	}
+
+	return time.Parse(time.RFC3339, input[0])
+}
+
+func stringDateTimeConverter(input []string) (time.Time, error) {
+	return stringDateConverter(input)
+}
+
+func stringUnixTimeConverter(input []string) (time.Time, error) {
+	if len(input) > 1 {
+		return time.Time{}, fmt.Errorf("got array '%v' instead of unix-time", input)
+	}
+
+	fromDateSec, err := strconv.ParseInt(input[0], 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(fromDateSec, 0), err
+}
+
+func stringEmailConverter(input []string) (string, error) {
+	if len(input) > 1 {
+		return "", fmt.Errorf("got array '%v' instead of string", input)
+	}
+
+	//TODO: write email check
+
+	return input[0], nil
+}
+
+func stringBinaryConverter(input []string) ([]byte, error) {
+	if len(input) > 1 {
+		return []byte{}, fmt.Errorf("got array '%v' instead of string", input)
+	}
+
+	return []byte(input[0]), nil
+}
+
+func stringConverter(input []string) (string, error) {
+	if len(input) > 1 {
+		return "", fmt.Errorf("got array '%v' instead of string", input)
+	}
+
+	return input[0], nil
+}
+
+func integerInt64Converter(input []string) (int64, error) {
+	if len(input) > 1 {
+		return 0, fmt.Errorf("got array '%v' instead of integer", input)
+	}
+
+	return strconv.ParseInt(input[0], 10, 64)
+}
+
+func integerConverter(input []string) (int, error) {
+	v, err := integerInt64Converter(input)
+	return int(v), err
+}
+
+func integerDecimalConverter(input []string) (decimal.Decimal, error) {
+	if len(input) > 1 {
+		return decimal.Decimal{}, fmt.Errorf("got array '%v' instead of decimal", input)
+	}
+
+	return decimal.NewFromString(input[0])
+}
+
+func ginGetCookie(c *gin.Context, param string) (string, bool) {
+	cookie, err := c.Request.Cookie(param)
+	if err == http.ErrNoCookie {
+		return "", false
+	}
+	return cookie.Value, true
+}
+
+func __gin_get_parameter(c *gin.Context, in string, parameterName string) ([]string, bool, error) {
+	if in == "cookie" {
+		data, existed := ginGetCookie(c, parameterName)
+		return []string{data}, existed, nil
+	} else if in == "header" {
+		data := c.Request.Header.Get(parameterName)
+		return []string{data}, len(data) != 0, nil
+	} else if in == "path" {
+		data, existed := c.Params.Get(parameterName)
+		return []string{data}, existed, nil
+	} else if in == "query" {
+		data, existed := c.Request.URL.Query()[parameterName]
+		return data, existed, nil
+	} else if in == "body" {
+		data, existed := c.GetPostFormArray(parameterName)
+		if existed == false && c.Request.MultipartForm != nil && c.Request.MultipartForm.File != nil {
+			fhs, ok := c.Request.MultipartForm.File[parameterName]
+			if !ok {
+				return []string{}, ok, nil
+			}
+
+			return []string{fhs[0].Filename}, ok, nil
+		}
+
+		return data, existed, nil
+	}
+
+	return []string{}, false, fmt.Errorf("Unsupported 'in': %v", in)
+}
+
 type PaymentGatewayAPI interface {
 	// GET /v1/example/:year/:user
 	Example(in ExampleRequest, c *gin.Context)
@@ -84,132 +213,106 @@ type PaymentGatewayAPIServer struct {
 // _PaymentGatewayAPI_Example_Handler
 
 type ExampleRequest struct {
-	Path  ExampleRequestPath
-	Query ExampleRequestQuery
-}
-
-func (t ExampleRequest) Validate() (errors []FieldError) {
-	// Path field validators
-	errors = t.Path.Validate()
-	if errors != nil {
-		return
-	}
-	// Query field validators
-	errors = t.Query.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Path  ExampleRequestPath  `json:"Path"`
+	Query ExampleRequestQuery `json:"Query"`
 }
 
 type ExampleRequestPath struct {
-	User ExampleRequestPathUser
-	Year int64
-}
-
-func (t ExampleRequestPath) Validate() (errors []FieldError) {
-	// User field validators
-	errors = t.User.Validate()
-	if errors != nil {
-		return
-	}
-	// Year field validators
-	return
-}
-
-type ExampleRequestPathUser struct {
-	FirstName string
-	Role      string
-}
-
-func (t ExampleRequestPathUser) Validate() (errors []FieldError) {
-	// FirstName field validators
-	// Role field validators
-	return
+	User string `json:"user"`
+	Year int64  `json:"year"`
 }
 
 type ExampleRequestQuery struct {
-	From     time.Time
-	FromDate time.Time
-	Sum      Decimal
-	To       time.Time
-}
-
-func (t ExampleRequestQuery) Validate() (errors []FieldError) {
-	// From field validators
-	// FromDate field validators
-	// Sum field validators
-	// To field validators
-	return
-}
-
-func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldError) {
-	result.Path, errors = MakeExampleRequestPath(c)
-	if errors != nil {
-		return
-	}
-
-	result.Query, errors = MakeExampleRequestQuery(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors []FieldError) {
-	var err error
-
-	yearStr, _ := c.Params.Get("year")
-	result.Year, err = strconv.ParseInt(yearStr, 10, 64)
-	if err != nil {
-		errors = append(errors, NewFieldError(InPath, "year", "can't parse as 64 bit integer", err))
-	}
-	return
-}
-
-func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors []FieldError) {
-	var err error
-
-	fromStr, _ := c.GetQuery("from")
-	result.From, err = time.Parse(time.RFC3339, fromStr)
-	if err != nil {
-		errors = append(errors, NewFieldError(InQuery, "from", "can't parse as RFC3339 time", err))
-	}
-
-	fromDateStr, _ := c.GetQuery("fromDate")
-	result.FromDate, err = time.Parse("2006-01-02", fromDateStr)
-	if err != nil {
-		errors = append(errors, NewFieldError(InQuery, "fromDate", "can't parse as RFC3339 date", err))
-	}
-
-	sumStr, _ := c.GetQuery("sum")
-	result.Sum = Decimal{}
-	if err = result.Sum.SetFromString(sumStr); err != nil {
-		errors = append(errors, NewFieldError(InQuery, "sum", fmt.Sprintf("can't create from string '%s'", sumStr), err))
-	}
-
-	toStr, _ := c.GetQuery("to")
-	toSec, err := strconv.ParseInt(toStr, 10, 64)
-	if err != nil {
-		errors = append(errors, NewFieldError(InQuery, "to", "can't parse as 64 bit integer", err))
-	} else {
-		result.To = time.Unix(toSec, 0)
-	}
-	return
+	Debug    bool            `json:"debug"`
+	From     time.Time       `json:"from"`
+	FromDate time.Time       `json:"fromDate"`
+	Sum      decimal.Decimal `json:"sum"`
+	Test     string          `json:"test"`
+	To       time.Time       `json:"to"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_Example_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "Example")
 
-	req, errors := MakeExampleRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req ExampleRequest
+	dataQueryTest, _, err := __gin_get_parameter(c, "query", "test")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
 		return
 	}
-
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
+	req.Query.Test, err = stringConverter(dataQueryTest)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataPathYear, _, err := __gin_get_parameter(c, "path", "year")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
+		return
+	}
+	req.Path.Year, err = integerInt64Converter(dataPathYear)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
+		return
+	}
+	dataPathUser, _, err := __gin_get_parameter(c, "path", "user")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
+		return
+	}
+	req.Path.User, err = stringConverter(dataPathUser)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
+		return
+	}
+	dataQueryDebug, _, err := __gin_get_parameter(c, "query", "debug")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.Debug, err = booleanConverter(dataQueryDebug)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataQuerySum, _, err := __gin_get_parameter(c, "query", "sum")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.Sum, err = integerDecimalConverter(dataQuerySum)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataQueryFromDate, _, err := __gin_get_parameter(c, "query", "fromDate")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.FromDate, err = stringDateConverter(dataQueryFromDate)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataQueryFrom, _, err := __gin_get_parameter(c, "query", "from")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.From, err = stringDateTimeConverter(dataQueryFrom)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataQueryTo, _, err := __gin_get_parameter(c, "query", "to")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.To, err = stringUnixTimeConverter(dataQueryTo)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
 		return
 	}
 
@@ -219,52 +322,25 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_Example_Handler(c *gin.
 // _PaymentGatewayAPI_GetFile_Handler
 
 type GetFileRequest struct {
-	Path GetFileRequestPath
-}
-
-func (t GetFileRequest) Validate() (errors []FieldError) {
-	// Path field validators
-	errors = t.Path.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Path GetFileRequestPath `json:"Path"`
 }
 
 type GetFileRequestPath struct {
-	Filename string
-}
-
-func (t GetFileRequestPath) Validate() (errors []FieldError) {
-	// Filename field validators
-	return
-}
-
-func MakeGetFileRequest(c *gin.Context) (result GetFileRequest, errors []FieldError) {
-	result.Path, errors = MakeGetFileRequestPath(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeGetFileRequestPath(c *gin.Context) (result GetFileRequestPath, errors []FieldError) {
-	result.Filename, _ = c.Params.Get("filename")
-	return
+	Filename string `json:"filename"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetFile_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "GetFile")
 
-	req, errors := MakeGetFileRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req GetFileRequest
+	dataPathFilename, _, err := __gin_get_parameter(c, "path", "filename")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
 		return
 	}
-
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
+	req.Path.Filename, err = stringConverter(dataPathFilename)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
 		return
 	}
 
@@ -274,70 +350,36 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetFile_Handler(c *gin.
 // _PaymentGatewayAPI_GetPayment_Handler
 
 type GetPaymentRequest struct {
-	Query GetPaymentRequestQuery
-}
-
-func (t GetPaymentRequest) Validate() (errors []FieldError) {
-	// Query field validators
-	errors = t.Query.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Query GetPaymentRequestQuery `json:"Query"`
 }
 
 type GetPaymentRequestQuery struct {
-	Async string
-	ID    string
-}
-
-func (t GetPaymentRequestQuery) Validate() (errors []FieldError) {
-	// Async field validators
-	var asyncInEnum bool
-	for _, elem := range [...]string{
-		"true",
-		"false",
-	} {
-		if elem == t.Async {
-			asyncInEnum = true
-			break
-		}
-	}
-	if !asyncInEnum {
-		errors = append(errors, NewFieldError(UndefinedPlace, "async", "allowed values: [true false]", nil))
-	}
-
-	// ID field validators
-	return
-}
-
-func MakeGetPaymentRequest(c *gin.Context) (result GetPaymentRequest, errors []FieldError) {
-	result.Query, errors = MakeGetPaymentRequestQuery(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeGetPaymentRequestQuery(c *gin.Context) (result GetPaymentRequestQuery, errors []FieldError) {
-	result.Async, _ = c.GetQuery("async")
-
-	result.ID, _ = c.GetQuery("id")
-	return
+	Async string `json:"async"`
+	ID    string `json:"id"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetPayment_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "GetPayment")
 
-	req, errors := MakeGetPaymentRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req GetPaymentRequest
+	dataQueryID, _, err := __gin_get_parameter(c, "query", "id")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
 		return
 	}
-
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
+	req.Query.ID, err = stringConverter(dataQueryID)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	dataQueryAsync, _, err := __gin_get_parameter(c, "query", "async")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
+		return
+	}
+	req.Query.Async, err = stringConverter(dataQueryAsync)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InQuery, "-", "", err)})
 		return
 	}
 
@@ -347,259 +389,139 @@ func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetPayment_Handler(c *g
 // _PaymentGatewayAPI_ProvidePayment_Handler
 
 type ProvidePaymentRequest struct {
-	Body ProvidePaymentRequestBody
-}
-
-func (t ProvidePaymentRequest) Validate() (errors []FieldError) {
-	// Body field validators
-	errors = t.Body.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Body ProvidePaymentRequestBody `json:"Body"`
 }
 
 type ProvidePaymentRequestBody struct {
-	JSON Payment
-	Type ContentType
-}
-
-func (t ProvidePaymentRequestBody) Validate() (errors []FieldError) {
-	// JSON field validators
-	errors = t.JSON.Validate()
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeProvidePaymentRequest(c *gin.Context) (result ProvidePaymentRequest, errors []FieldError) {
-	result.Body, errors = MakeProvidePaymentRequestBody(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeProvidePaymentRequestBody(c *gin.Context) (result ProvidePaymentRequestBody, errors []FieldError) {
-	contentType := c.Request.Header.Get("Content-Type")
-
-	if contentType == "" {
-		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
-		return
-	}
-	contentType = strings.Split(contentType, ";")[0]
-
-	switch contentType {
-	case "application/json":
-		result.Type = AppJSON
-		if err := json.NewDecoder(c.Request.Body).Decode(&result.JSON); err != nil {
-			errors = append(errors, NewFieldError(InBody, "requestBody", "can't decode body from JSON", err))
-		}
-
-	default:
-		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
-	}
-	return
+	JSON Payment `json:"JSON"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_ProvidePayment_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "ProvidePayment")
 
-	req, errors := MakeProvidePaymentRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req ProvidePaymentRequest
+
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "unsupported Content-type", nil)})
 		return
 	}
+	contentType = strings.Split(contentType, ";")[0]
 
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
-		return
+	//TODO: refactor
+	switch contentType {
+
+	case "application/json":
+		if err := json.NewDecoder(c.Request.Body).Decode(&req.Body.JSON); err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "can't decode body from JSON", err)})
+			return
+		}
 	}
-
 	server.Srv.ProvidePayment(req, c)
 }
 
 // _PaymentGatewayAPI_CreateUser_Handler
 
 type CreateUserRequest struct {
-	Body CreateUserRequestBody
-}
-
-func (t CreateUserRequest) Validate() (errors []FieldError) {
-	// Body field validators
-	errors = t.Body.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Body CreateUserRequestBody `json:"Body"`
 }
 
 type CreateUserRequestBody struct {
-	Form CreateUserRequestBodyForm
-	Type ContentType
-}
-
-func (t CreateUserRequestBody) Validate() (errors []FieldError) {
-	// Form field validators
-	errors = t.Form.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Form CreateUserRequestBodyForm `json:"Form"`
 }
 
 type CreateUserRequestBodyForm struct {
-	Age    int64
-	Avatar *multipart.FileHeader
-	Email  string
-	Name   string
-}
-
-func (t CreateUserRequestBodyForm) Validate() (errors []FieldError) {
-	// Age field validators
-	// Avatar field validators
-	// Email field validators
-	// Name field validators
-	return
-}
-
-func MakeCreateUserRequest(c *gin.Context) (result CreateUserRequest, errors []FieldError) {
-	result.Body, errors = MakeCreateUserRequestBody(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeCreateUserRequestBody(c *gin.Context) (result CreateUserRequestBody, errors []FieldError) {
-	contentType := c.Request.Header.Get("Content-Type")
-
-	if contentType == "" {
-		errors = append(errors, NewFieldError(InBody, "-", "no content type specified", nil))
-		return
-	}
-	contentType = strings.Split(contentType, ";")[0]
-
-	switch contentType {
-	case "multipart/form-data":
-		result.Type = MultipartFormData
-		result.Form, errors = MakeCreateUserRequestBodyForm(c)
-		if errors != nil {
-			return
-		}
-
-	default:
-		errors = append(errors, NewFieldError(InBody, "-", "unknown content type", nil))
-	}
-	return
-}
-
-func MakeCreateUserRequestBodyForm(c *gin.Context) (result CreateUserRequestBodyForm, errors []FieldError) {
-	var err error
-
-	form, err := c.MultipartForm()
-	if err != nil {
-		errors = append(errors, NewFieldError(InFormData, "", "can't parse multipart form", err))
-		return
-	}
-
-	getFormValue := func(param string) (string, bool) {
-		values, ok := form.Value[param]
-		if !ok {
-			return "", false
-		}
-		if len(values) == 0 {
-			return "", false
-		}
-		return values[0], true
-	}
-
-	ageStr, _ := getFormValue("age")
-	result.Age, err = strconv.ParseInt(ageStr, 10, 0)
-	if err != nil {
-		errors = append(errors, NewFieldError(InFormData, "age", "can't parse as integer", err))
-	}
-
-	result.Avatar, err = c.FormFile("avatar")
-	if err != nil {
-		errors = append(errors, NewFieldError(InFormData, "avatar", "can't extract file from form-data", err))
-	}
-
-	result.Email, _ = getFormValue("email")
-
-	result.Name, _ = getFormValue("name")
-	return
+	Age    int64  `json:"age"`
+	Avatar []byte `json:"avatar"`
+	Email  string `json:"email"`
+	Name   string `json:"name"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_CreateUser_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "CreateUser")
 
-	req, errors := MakeCreateUserRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req CreateUserRequest
+
+	contentType := c.Request.Header.Get("Content-Type")
+
+	if contentType == "" {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "unsupported Content-type", nil)})
 		return
 	}
+	contentType = strings.Split(contentType, ";")[0]
 
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
-		return
+	//TODO: refactor
+	switch contentType {
+
+	case "multipart/form-data":
+		dataBodyAge, _, err := __gin_get_parameter(c, "body", "age")
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		req.Body.Form.Age, err = integerConverter(dataBodyAge)
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		dataBodyAvatar, _, err := __gin_get_parameter(c, "body", "avatar")
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		req.Body.Form.Avatar, err = stringBinaryConverter(dataBodyAvatar)
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		dataBodyEmail, _, err := __gin_get_parameter(c, "body", "email")
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		req.Body.Form.Email, err = stringEmailConverter(dataBodyEmail)
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		dataBodyName, _, err := __gin_get_parameter(c, "body", "name")
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+		req.Body.Form.Name, err = stringConverter(dataBodyName)
+		if err != nil {
+			server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InBody, "-", "", err)})
+			return
+		}
+
 	}
-
 	server.Srv.CreateUser(req, c)
 }
 
 // _PaymentGatewayAPI_GetUser_Handler
 
 type GetUserRequest struct {
-	Path GetUserRequestPath
-}
-
-func (t GetUserRequest) Validate() (errors []FieldError) {
-	// Path field validators
-	errors = t.Path.Validate()
-	if errors != nil {
-		return
-	}
-	return
+	Path GetUserRequestPath `json:"Path"`
 }
 
 type GetUserRequestPath struct {
-	UserID string
-}
-
-func (t GetUserRequestPath) Validate() (errors []FieldError) {
-	// UserID field validators
-	return
-}
-
-func MakeGetUserRequest(c *gin.Context) (result GetUserRequest, errors []FieldError) {
-	result.Path, errors = MakeGetUserRequestPath(c)
-	if errors != nil {
-		return
-	}
-	return
-}
-
-func MakeGetUserRequestPath(c *gin.Context) (result GetUserRequestPath, errors []FieldError) {
-	result.UserID, _ = c.Params.Get("userId")
-	return
+	UserID string `json:"userId"`
 }
 
 func (server PaymentGatewayAPIServer) _PaymentGatewayAPI_GetUser_Handler(c *gin.Context) {
 	c.Set(handlerNameKey, "GetUser")
 
-	req, errors := MakeGetUserRequest(c)
-	if len(errors) > 0 {
-		server.Srv.ProcessMakeRequestErrors(c, errors)
+	var req GetUserRequest
+	dataPathUserID, _, err := __gin_get_parameter(c, "path", "userId")
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
 		return
 	}
-
-	errors = req.Validate()
-	if len(errors) > 0 {
-		server.Srv.ProcessValidateErrors(c, errors)
+	req.Path.UserID, err = stringConverter(dataPathUserID)
+	if err != nil {
+		server.Srv.ProcessMakeRequestErrors(c, []FieldError{NewFieldError(InPath, "-", "", err)})
 		return
 	}
 
@@ -624,57 +546,9 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 
 type ID string
 
-func (t ID) Validate() (errors []FieldError) {
-	return
-}
-
 type Payment struct {
 	MerchantID string          `json:"merchant_id"`
-	Meta       json.RawMessage `json:"meta"`
-	PaymentID  ID              `json:"payment_id"`
-	Sum        Decimal         `json:"sum"`
+	Sum        decimal.Decimal `json:"sum"`
 	Type       string          `json:"type"`
 }
-
-func (t Payment) Validate() (errors []FieldError) {
-	// MerchantID field validators
-	// Meta field validators
-	// PaymentID field validators
-	errors = t.PaymentID.Validate()
-	if errors != nil {
-		return
-	}
-	// Sum field validators
-	// Type field validators
-	var typeInEnum bool
-	for _, elem := range [...]string{
-		"deposit",
-		"payment",
-	} {
-		if elem == t.Type {
-			typeInEnum = true
-			break
-		}
-	}
-	if !typeInEnum {
-		errors = append(errors, NewFieldError(UndefinedPlace, "type", "allowed values: [deposit payment]", nil))
-	}
-
-	return
-}
-
-type Payments []Payment
-
-func (t Payments) Validate() (errors []FieldError) {
-	return
-}
-
-// Custom types
-
-type FromStringSetter interface {
-	SetFromString(string) error
-}
-
-var _ json.Marshaler = (*Decimal)(nil)
-var _ json.Unmarshaler = (*Decimal)(nil)
-var _ FromStringSetter = (*Decimal)(nil)
+type Payments Payment

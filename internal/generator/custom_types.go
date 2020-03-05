@@ -26,10 +26,10 @@ type FromStringSetter interface {
 var _ json.Marshaler = (*%s)(nil)
 var _ json.Unmarshaler = (*%s)(nil)
 var _ FromStringSetter = (*%s)(nil)
-`, field.GoType, field.GoType, field.GoType); err != nil {
+`, field.Schema.Type, field.Schema.Type, field.Schema.Type); err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintf(os.Stderr, "please implement own type `%s`\n", field.GoType); err != nil {
+		if _, err := fmt.Fprintf(os.Stderr, "please implement own type `%s`\n", field.Schema.Type); err != nil {
 			return err
 		}
 	}

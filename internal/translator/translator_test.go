@@ -35,7 +35,7 @@ func TestProcessRootSchema(t *testing.T) {
 	assert.NoError(t, yaml.Unmarshal([]byte(schemaExample), &schema))
 	schema.Name = "Payment"
 
-	defs, err := ProcessRootSchema(schema)
+	defs, err := MakeAllTypeDefsFromOpenAPIObject(schema)
 	if !assert.NoError(t, err) {
 		return
 	}

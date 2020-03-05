@@ -7,7 +7,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/kepkin/gorest/internal/generator/translator"
+	"github.com/kepkin/gorest/internal/translator"
 )
 
 var validateTemplate = template.Must(template.New("validate").Funcs(template.FuncMap{
@@ -75,9 +75,9 @@ if !{{ .Parameter }}InEnum {
 `))
 
 func makeEnumValidator(f translator.Field) (string, error) {
-	if len(f.Schema.Enum) == 0 {
+	//if len(f.Schema.Enum) == 0 {
 		return "", nil
-	}
+	//}
 
 	switch f.Type {
 	case translator.IntegerField, translator.FloatField, translator.StringField:

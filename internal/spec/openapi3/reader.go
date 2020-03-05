@@ -1,6 +1,7 @@
 package openapi3
 
-import "gopkg.in/yaml.v2"
+//import "gopkg.in/yaml.v2"
+import "github.com/ghodss/yaml"
 
 type Type string
 
@@ -16,6 +17,8 @@ const (
 type Format string
 
 const (
+	None Format = ""
+
 	Integer32bit Format = "int32"
 	Integer64bit Format = "int64"
 
@@ -94,6 +97,11 @@ type RequestBodyType struct {
 
 type MimeType = string
 
+const (
+	MultiPartFormDataMimeType MimeType = "multipart/form-data"
+	ApplicationJsonMimeType MimeType = "application/json"
+)
+
 type ContentType struct {
 	Schema *SchemaType
 }
@@ -119,13 +127,13 @@ type ComponentsType struct {
 type SchemaType struct {
 	Title       string
 	Description string
-	Enum        []string
-	// TODO(a.telyshev) Default
-	Format     Format
-	Type       Type
-	IsNullable bool `yaml:"nullable"`
+	//Enum        []string
+	//Default     *string
+	Format      Format
+	Type        Type
+	IsNullable  bool `yaml:"nullable"`
 
-	Ref string `yaml:"$ref"`
+	Ref string `json:"$ref"`
 
 	ArraySchema  `yaml:",inline"`
 	StringSchema `yaml:",inline"`

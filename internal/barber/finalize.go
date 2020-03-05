@@ -3,8 +3,7 @@ package barber
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	"go/ast"
+	fmt "fmt"
 	"go/format"
 	"go/parser"
 	"go/scanner"
@@ -13,7 +12,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"golang.org/x/tools/go/ast/astutil"
+	//"golang.org/x/tools/go/ast/astutil"
 )
 
 func PrettifySource(src io.Reader, dst io.Writer) error {
@@ -34,7 +33,7 @@ func PrettifySource(src io.Reader, dst io.Writer) error {
 	}
 
 	// TODO(a.telyshev): Save info about used imports in generator.Generator?
-	cleanUnusedImports(fset, file)
+	//cleanUnusedImports(fset, file)
 
 	if err = format.Node(dst, fset, file); err != nil {
 		return err
@@ -42,19 +41,19 @@ func PrettifySource(src io.Reader, dst io.Writer) error {
 	return nil
 }
 
-func cleanUnusedImports(fset *token.FileSet, file *ast.File) {
-	imps := astutil.Imports(fset, file)
-	for _, group := range imps {
-		for _, imp := range group {
-			path := strings.Trim(imp.Path.Value, `"`)
-			if !astutil.UsesImport(file, path) {
-				if imp.Name != nil {
-					astutil.DeleteNamedImport(fset, file, imp.Name.Name, path)
-				} else {
-					astutil.DeleteImport(fset, file, path)
-				}
-			}
-		}
-	}
-	ast.SortImports(fset, file)
-}
+//func cleanUnusedImports(fset *token.FileSet, file *ast.File) {
+//	imps := astutil.Imports(fset, file)
+//	for _, group := range imps {
+//		for _, imp := range group {
+//			path := strings.Trim(imp.Path.Value, `"`)
+//			if !astutil.UsesImport(file, path) {
+//				if imp.Name != nil {
+//					astutil.DeleteNamedImport(fset, file, imp.Name.Name, path)
+//				} else {
+//					astutil.DeleteImport(fset, file, path)
+//				}
+//			}
+//		}
+//	}
+//	ast.SortImports(fset, file)
+//}
