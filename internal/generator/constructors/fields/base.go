@@ -7,6 +7,10 @@ import (
 )
 
 var makeValueFieldTemplate = template.Must(template.New("setValue").Funcs(Constructors).Parse(`
+	{{- if .IsString }}
+		{{ StringConstructor .Field .Place}}
+	{{- end }}
+	
 	{{- if .IsCustom }}
 		{{ CustomFieldConstructor .Field .Place }}
 	{{- end }}

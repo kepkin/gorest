@@ -12,11 +12,14 @@ import (
 )
 
 func TestMakeCookieParamsConstructor(t *testing.T) {
+	defaultSessioID := "id session"
+	defaultMaxAge := "22"
+
 	def := translator.TypeDef{
 		Name: "IncomeRequestCookie",
 		Fields: []translator.Field{
-			{Name: "SessionID", GoType: "string", Parameter: "sessionID", Type: translator.StringField, Schema: openapi3.SchemaType{Default: "id session"}},
-			{Name: "MaxAge", GoType: "int64", Parameter: "Max-Age", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: "22"}},
+			{Name: "SessionID", GoType: "string", Parameter: "sessionID", Type: translator.StringField, Schema: openapi3.SchemaType{Default: &defaultSessioID}},
+			{Name: "MaxAge", GoType: "int64", Parameter: "Max-Age", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: &defaultMaxAge}},
 			{Name: "Domain", GoType: "string", Parameter: "Domain", Type: translator.StringField},
 		},
 	}
@@ -45,22 +48,24 @@ func MakeIncomeRequestCookie(c *gin.Context) (result IncomeRequestCookie, errors
 		return cookie.Value, true
 	}
 
-	result.SessionID, ok = getCookie("sessionID")
+	sessionIDStr, ok := getCookie("sessionID")
 	if !ok {
-		result.SessionID = "id session"
+		sessionIDStr = "id session"
 	}
+	result.SessionID = sessionIDStr
 
 	maxAgeStr, ok := getCookie("Max-Age")
 	if !ok {
 		maxAgeStr = "22"
 	}
-
 	result.MaxAge, err = strconv.ParseInt(maxAgeStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InCookie, "Max-Age", "can't parse as integer", err))
 	}
 
-	result.Domain, _ = getCookie("Domain")
+	domainStr, _ := getCookie("Domain")
+	result.Domain = domainStr
+
 	return
 }
 `, prettyResult.String())

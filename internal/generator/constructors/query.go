@@ -21,24 +21,13 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		{{- if .IsString }}
-			{{- if .CheckDefault}}
-				result.{{ .Name }}, ok = c.GetQuery("{{ .Parameter }}")
-				if !ok {
-					result.{{ .Name }} = "{{ .Schema.Default }}"
-				}
-			{{ else }}
-				result.{{ .Name }}, _ = c.GetQuery("{{ .Parameter }}")
-			{{- end }}
-		{{- else if or (.IsCustom)  (.IsInteger)  (.IsFloat)  (.IsDate)  (.IsDateTime)  (.IsUnixTime)}}
-			 {{- if .CheckDefault}}
-				{{ .StrVarName }}, ok := c.GetQuery("{{ .Parameter }}")
-				if !ok {
-				   {{ .StrVarName }} = "{{ .Schema.Default }}"
-				}
-			 {{ else }}
-				{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
-			 {{- end }}
+		{{- if .CheckDefault}}
+			{{ .StrVarName }}, ok := c.GetQuery("{{ .Parameter }}")
+			if !ok {
+				{{ .StrVarName }} = "{{ .Schema.Default }}"
+			}
+		{{- else }}
+			{{ .StrVarName }}, _ := c.GetQuery("{{ .Parameter }}")
 		{{- end }}
 
 		{{- BaseValueFieldConstructor . "InQuery" }}

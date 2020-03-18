@@ -21,24 +21,13 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		{{- if .IsString }}
-			{{- if .CheckDefault}}
-				result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
-				if result.{{ .Name }} == "" {
-					result.{{ .Name }} = "{{ .Schema.Default }}"
-				}
-			{{ else }}
-				result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
-			{{- end }}
-		{{- else if or (.IsCustom)  (.IsInteger)  (.IsFloat)  (.IsDate)  (.IsDateTime)  (.IsUnixTime)}}
-			 {{- if .CheckDefault}}
-				{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-				if {{ .StrVarName }} != "" {
-				   {{ .StrVarName }} = "{{ .Schema.Default }}"
-				}
-			 {{ else }}
-				{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			 {{- end }}
+		{{- if .CheckDefault}}
+			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
+			if {{ .StrVarName }} != "" {
+			   {{ .StrVarName }} = "{{ .Schema.Default }}"
+			}
+		{{- else }}
+			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
 		{{- end }}
 
 		{{- BaseValueFieldConstructor . "InHeader" }}

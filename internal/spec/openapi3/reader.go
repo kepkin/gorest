@@ -120,7 +120,7 @@ type SchemaType struct {
 	Title       string
 	Description string
 	Enum        []string
-	Default     string
+	Default     *string
 	Format      Format
 	Type        Type
 	IsNullable  bool `yaml:"nullable"`

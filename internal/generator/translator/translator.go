@@ -119,7 +119,7 @@ func (f Field) IsFile() bool {
 }
 
 func (f Field) CheckDefault() bool {
-	return f.Schema.Default != ""
+	return f.Schema.Default != nil
 }
 
 func ProcessRootSchema(schema openapi3.SchemaType) ([]TypeDef, error) {

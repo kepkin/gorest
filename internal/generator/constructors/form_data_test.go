@@ -12,11 +12,13 @@ import (
 )
 
 func TestMakeFormDataConstructor(t *testing.T) {
+	defaultAge := "22"
+
 	def := translator.TypeDef{
 		Name: "UserProfileRequestBodyForm",
 		Fields: []translator.Field{
 			{Name: "Name", GoType: "string", Parameter: "name", Type: translator.StringField},
-			{Name: "Age", GoType: "int64", Parameter: "age", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: "22"}},
+			{Name: "Age", GoType: "int64", Parameter: "age", Type: translator.IntegerField, Schema: openapi3.SchemaType{Default: &defaultAge}},
 			{Name: "Photo", GoType: "*multipart.FileHeader", Parameter: "photo", Type: translator.FileField},
 		},
 	}
@@ -54,13 +56,13 @@ func MakeUserProfileRequestBodyForm(c *gin.Context) (result UserProfileRequestBo
 		return values[0], true
 	}
 
-	result.Name, _ = getFormValue("name")
+	nameStr, _ := getFormValue("name")
+	result.Name = nameStr
 
 	ageStr, ok := getFormValue("age")
 	if !ok {
 		ageStr = "22"
 	}
-
 	result.Age, err = strconv.ParseInt(ageStr, 10, 0)
 	if err != nil {
 		errors = append(errors, NewFieldError(InFormData, "age", "can't parse as integer", err))

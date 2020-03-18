@@ -42,25 +42,15 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{ range $, $field := .Fields }}
 	{{- with $field }}
-		
-		{{- if .IsString }}
+		{{- if not .IsFile}}
 			{{- if .CheckDefault}}
-				result.{{ .Name }}, ok = getFormValue("{{ .Parameter }}")
-				if !ok {
-					result.{{ .Name }} = "{{ .Schema.Default }}"
-				}
-			{{ else }}
-				result.{{ .Name }}, _ = getFormValue("{{ .Parameter }}")
-			{{- end }}
-		{{- else if or (.IsCustom)  (.IsInteger)  (.IsFloat)  (.IsDate)  (.IsDateTime)  (.IsUnixTime)}}
-			 {{- if .CheckDefault}}
 				{{ .StrVarName }}, ok := getFormValue("{{ .Parameter }}")
 				if !ok {
 				   {{ .StrVarName }} = "{{ .Schema.Default }}"
 				}
-			 {{ else }}
+			{{- else }}
 				{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			 {{- end }}
+			{{- end }}
 		{{- end }}
 		
 		{{- BaseValueFieldConstructor . "InFormData" }}
