@@ -1,7 +1,6 @@
 package fields
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,7 +24,6 @@ func TestMakeStringFieldConstructor(t *testing.T) {
 			Type:      translator.StringField,
 			Schema:    openapi3.SchemaType{NumberSchema: openapi3.NumberSchema{BitSize: 32}},
 		}, "InQuery")
-		fmt.Println(s)
 		if !assert.NoError(t, err) {
 			return
 		}
