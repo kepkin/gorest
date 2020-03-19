@@ -15,6 +15,11 @@ var Constructors = template.FuncMap{
 	"FloatConstructor":       MakeFloatFieldConstructor,
 	"IntConstructor":         MakeIntFieldConstructor,
 	"UnixTimeConstructor":    MakeUnixTimeFieldConstructor,
+	"StringConstructor":      MakeStringFieldConstructor,
+}
+
+var BaseConstructor = template.FuncMap{
+	"BaseValueFieldConstructor": MakeValueFieldConstructor,
 }
 
 func executeFieldConstructorTemplate(t *template.Template, f translator.Field, place string) (string, error) {

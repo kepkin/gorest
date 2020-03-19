@@ -13,7 +13,7 @@ func MakeHeaderParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return headerParamsConstructorTemplate.Execute(wr, def)
 }
 
-var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(fields.Constructors).Parse(`
+var headerParamsConstructorTemplate = template.Must(template.New("headerParamsConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -21,42 +21,18 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		
-		{{- if .IsString }}
-			result.{{ .Name }} = c.Request.Header.Get("{{ .Parameter }}")
-		{{- end }}
-
-		{{- if .IsCustom }}
+		{{- if .CheckDefault}}
 			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InHeader" }}
-		{{- end }}
-
-		{{- if .IsInteger }}
+			if {{ .StrVarName }} != "" {
+			   {{ .StrVarName }} = "{{ .Schema.Default }}"
+			}
+		{{- else }}
 			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ IntConstructor . "InHeader" }}
 		{{- end }}
 
-		{{- if .IsFloat }}
-			{{ .StrVarName }} := c.Request.Header.Get("{{ .Parameter }}")
-			{{ FloatConstructor . "InHeader" }}
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InHeader" }}
 
-		{{- if or .IsDate .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InHeader" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InHeader" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := c.Request.Header.Get("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InHeader" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }

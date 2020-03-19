@@ -13,7 +13,7 @@ func MakePathParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return pathParamsConstructorTemplate.Execute(wr, def)
 }
 
-var pathParamsConstructorTemplate = template.Must(template.New("pathParamsConstructor").Funcs(fields.Constructors).Parse(`
+var pathParamsConstructorTemplate = template.Must(template.New("pathParamsConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -21,42 +21,18 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{- range $, $field := .Fields }}
 	{{- with $field }}
-		
-		{{- if .IsString }}
-			result.{{ .Name }}, _ = c.Params.Get("{{ .Parameter }}")
-		{{- end }}
-
-		{{- if .IsCustom }}
+		{{- if .CheckDefault}}
+			{{ .StrVarName }}, ok := c.Params.Get("{{ .Parameter }}")
+			if !ok {
+			   {{ .StrVarName }} = "{{ .Schema.Default }}"
+			}
+		{{- else }}
 			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InPath" }}
 		{{- end }}
 
-		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ IntConstructor . "InPath" }}
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InPath" }}
 
-		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ FloatConstructor . "InPath" }}
-		{{- end }}
-
-		{{- if or .IsDate .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InPath" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InPath" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := c.Params.Get("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InPath" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }

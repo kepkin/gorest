@@ -13,7 +13,7 @@ func MakeCookieParamsConstructor(wr io.Writer, def translator.TypeDef) error {
 	return cookieParamsConstructorTemplate.Execute(wr, def)
 }
 
-var cookieParamsConstructorTemplate = template.Must(template.New("cookieParamsConstructor").Funcs(fields.Constructors).Parse(`
+var cookieParamsConstructorTemplate = template.Must(template.New("cookieParamsConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -31,42 +31,18 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{ range $, $field := .Fields }}
 	{{- with $field }}
-		
-		{{- if .IsString }}
-			result.{{ .Name }}, _ = getCookie("{{ .Parameter }}")
-		{{- end }}
-
-		{{- if .IsCustom }}
+		{{- if .CheckDefault}}
+			{{ .StrVarName }}, ok := getCookie("{{ .Parameter }}")
+			if !ok {
+			   {{ .StrVarName }} = "{{ .Schema.Default }}"
+			}
+		{{- else }}
 			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InCookie" }}
 		{{- end }}
 
-		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ IntConstructor . "InCookie" }}
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InCookie" }}
 
-		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ FloatConstructor . "InCookie" }}
-		{{- end }}
-
-		{{- if or .IsDate .IsDateTime }}
-			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InCookie" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InCookie" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := getCookie("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InCookie" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }

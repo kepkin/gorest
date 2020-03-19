@@ -16,11 +16,18 @@ paths:
       operationId: Example
 
       parameters:
+        - name: test
+          in: query
+          required: true
+          schema:
+            type: string
+
         - name: year
           in: path
           schema:
             type: integer
             format: int64
+            default: 23
 
         - name: user
           in: path
@@ -37,6 +44,7 @@ paths:
           schema:
             type: integer
             format: decimal
+            default: 10
 
         - name: fromDate
           in: query

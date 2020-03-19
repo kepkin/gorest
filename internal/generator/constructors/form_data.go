@@ -13,7 +13,7 @@ func MakeFormDataConstructor(wr io.Writer, def translator.TypeDef) error {
 	return formDataConstructorTemplate.Execute(wr, def)
 }
 
-var formDataConstructorTemplate = template.Must(template.New("formDataConstructor").Funcs(fields.Constructors).Parse(`
+var formDataConstructorTemplate = template.Must(template.New("formDataConstructor").Funcs(fields.BaseConstructor).Parse(`
 func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 	{{- if .HasNoStringFields }}
 	var err error
@@ -42,46 +42,20 @@ func Make{{ .Name }}(c *gin.Context) (result {{ .Name }}, errors []FieldError) {
 
 	{{ range $, $field := .Fields }}
 	{{- with $field }}
+		{{- if not .IsFile}}
+			{{- if .CheckDefault}}
+				{{ .StrVarName }}, ok := getFormValue("{{ .Parameter }}")
+				if !ok {
+				   {{ .StrVarName }} = "{{ .Schema.Default }}"
+				}
+			{{- else }}
+				{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
+			{{- end }}
+		{{- end }}
 		
-		{{- if .IsString }}
-			result.{{ .Name }}, _ = getFormValue("{{ .Parameter }}")
-		{{- end }}
+		{{- BaseValueFieldConstructor . "InFormData" }}
 
-		{{- if .IsCustom }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ CustomFieldConstructor . "InFormData" }}
-		{{- end }}
-
-		{{- if .IsInteger }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ IntConstructor . "InFormData" }}
-		{{- end }}
-
-		{{- if .IsFloat }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ FloatConstructor . "InFormData" }}
-		{{- end }}
-
-		{{- if or .IsDate .IsDateTime }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InFormData" }}
-		{{- end }}
-
-        {{- if .IsDateTime }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ DateTimeConstructor . "InFormData" }}
-		{{- end }}
-
-		{{- if .IsUnixTime }}
-			{{ .StrVarName }}, _ := getFormValue("{{ .Parameter }}")
-			{{ UnixTimeConstructor . "InFormData" }}
-		{{- end }}
-
-		{{- if .IsFile }}
-			{{ FileConstructor . "InFormData" }}
-		{{- end }}
-
-	{{- end }}
+	{{- end -}}
 	{{ end -}}
 	return
 }
