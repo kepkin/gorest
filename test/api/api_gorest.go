@@ -103,28 +103,13 @@ func (t ExampleRequest) Validate() (errors []FieldError) {
 }
 
 type ExampleRequestPath struct {
-	User ExampleRequestPathUser
+	User string
 	Year int64
 }
 
 func (t ExampleRequestPath) Validate() (errors []FieldError) {
 	// User field validators
-	errors = t.User.Validate()
-	if errors != nil {
-		return
-	}
 	// Year field validators
-	return
-}
-
-type ExampleRequestPathUser struct {
-	FirstName string
-	Role      string
-}
-
-func (t ExampleRequestPathUser) Validate() (errors []FieldError) {
-	// FirstName field validators
-	// Role field validators
 	return
 }
 
@@ -163,7 +148,8 @@ func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldEr
 func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors []FieldError) {
 	var err error
 
-	Str, _ := c.Params.Get("")
+	userStr, _ := c.Params.Get("user")
+	result.User = userStr
 
 	yearStr, ok := c.Params.Get("year")
 	if !ok {
@@ -180,6 +166,14 @@ func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors
 	var err error
 
 	debugStr, _ := c.GetQuery("debug")
+	switch strings.ToLower(debugStr) {
+	case "1", "true", "t":
+		result.Debug = true
+	case "0", "false", "f":
+		result.Debug = false
+	default:
+		errors = append(errors, NewFieldError(InQuery, "debug", "can't parse as boolean", nil))
+	}
 
 	fromStr, _ := c.GetQuery("from")
 	result.From, err = time.Parse(time.RFC3339, fromStr)

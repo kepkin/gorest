@@ -32,12 +32,7 @@ paths:
         - name: user
           in: path
           schema:
-            type: object
-            properties:
-              role:
-                type: string
-              firstName:
-                type: string
+            type: string
 
         - name: debug
           in: query

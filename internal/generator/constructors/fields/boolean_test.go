@@ -16,7 +16,7 @@ func TestMakeBooleanConstructor(t *testing.T) {
 		assert.Error(t, err)
 	})
 
-	t.Run("No bit size", func(t *testing.T) {
+	t.Run("Correct boolean", func(t *testing.T) {
 		s, err := MakeBooleanFieldConstructor(translator.Field{
 			Name:      "Flag",
 			Parameter: "flag",
@@ -25,12 +25,13 @@ func TestMakeBooleanConstructor(t *testing.T) {
 		if !assert.NoError(t, err) {
 			return
 		}
-		assert.Equal(t, `flagStr = strings.strings.ToLower(flagStr)
-switch flagStr {
+		assert.Equal(t, `switch strings.ToLower(flagStr) {
     case "1", "true", "t":
         result.Flag = true
-    default:
+    case "0", "false", "f":
         result.Flag = false
+    default:
+        errors = append(errors, NewFieldError(InPath, "flag", "can't parse as boolean", nil))
 }`, s)
 	})
 }
