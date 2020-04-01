@@ -8,6 +8,7 @@ import (
 )
 
 var Constructors = template.FuncMap{
+	"BooleanConstructor":     MakeBooleanFieldConstructor,
 	"CustomFieldConstructor": MakeCustomFieldConstructor,
 	"DateConstructor":        MakeDateFieldConstructor,
 	"DateTimeConstructor":    MakeDateTimeFieldConstructor,

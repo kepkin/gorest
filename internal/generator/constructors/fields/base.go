@@ -1,12 +1,17 @@
 package fields
 
 import (
+	"fmt"
 	"text/template"
 
 	"github.com/kepkin/gorest/internal/generator/translator"
 )
 
 var makeValueFieldTemplate = template.Must(template.New("setValue").Funcs(Constructors).Parse(`
+	{{- if .IsBoolean }}
+		{{ BooleanConstructor .Field .Place}}
+	{{- end }}
+
 	{{- if .IsString }}
 		{{ StringConstructor .Field .Place}}
 	{{- end }}
@@ -41,5 +46,11 @@ var makeValueFieldTemplate = template.Must(template.New("setValue").Funcs(Constr
 `))
 
 func MakeValueFieldConstructor(f translator.Field, place string) (string, error) {
+	if place == "InPath" {
+		if f.IsStruct() || f.IsArray() || f.IsFile() {
+			return "" , fmt.Errorf("unsupported type in path")
+		}
+	}
+
 	return executeFieldConstructorTemplate(makeValueFieldTemplate, f, place)
 }

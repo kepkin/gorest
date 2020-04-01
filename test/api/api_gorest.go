@@ -103,42 +103,31 @@ func (t ExampleRequest) Validate() (errors []FieldError) {
 }
 
 type ExampleRequestPath struct {
-	User ExampleRequestPathUser
+	User string
 	Year int64
 }
 
 func (t ExampleRequestPath) Validate() (errors []FieldError) {
 	// User field validators
-	errors = t.User.Validate()
-	if errors != nil {
-		return
-	}
 	// Year field validators
 	return
 }
 
-type ExampleRequestPathUser struct {
-	FirstName string
-	Role      string
-}
-
-func (t ExampleRequestPathUser) Validate() (errors []FieldError) {
-	// FirstName field validators
-	// Role field validators
-	return
-}
-
 type ExampleRequestQuery struct {
+	Debug    bool
 	From     time.Time
 	FromDate time.Time
 	Sum      Decimal
+	Test     string
 	To       time.Time
 }
 
 func (t ExampleRequestQuery) Validate() (errors []FieldError) {
+	// Debug field validators
 	// From field validators
 	// FromDate field validators
 	// Sum field validators
+	// Test field validators
 	// To field validators
 	return
 }
@@ -159,7 +148,13 @@ func MakeExampleRequest(c *gin.Context) (result ExampleRequest, errors []FieldEr
 func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors []FieldError) {
 	var err error
 
-	yearStr, _ := c.Params.Get("year")
+	userStr, _ := c.Params.Get("user")
+	result.User = userStr
+
+	yearStr, ok := c.Params.Get("year")
+	if !ok {
+		yearStr = "23"
+	}
 	result.Year, err = strconv.ParseInt(yearStr, 10, 64)
 	if err != nil {
 		errors = append(errors, NewFieldError(InPath, "year", "can't parse as 64 bit integer", err))
@@ -169,6 +164,16 @@ func MakeExampleRequestPath(c *gin.Context) (result ExampleRequestPath, errors [
 
 func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors []FieldError) {
 	var err error
+
+	debugStr, _ := c.GetQuery("debug")
+	switch strings.ToLower(debugStr) {
+	case "1", "true", "t":
+		result.Debug = true
+	case "0", "false", "f":
+		result.Debug = false
+	default:
+		errors = append(errors, NewFieldError(InQuery, "debug", "can't parse as boolean", nil))
+	}
 
 	fromStr, _ := c.GetQuery("from")
 	result.From, err = time.Parse(time.RFC3339, fromStr)
@@ -182,11 +187,17 @@ func MakeExampleRequestQuery(c *gin.Context) (result ExampleRequestQuery, errors
 		errors = append(errors, NewFieldError(InQuery, "fromDate", "can't parse as RFC3339 date", err))
 	}
 
-	sumStr, _ := c.GetQuery("sum")
+	sumStr, ok := c.GetQuery("sum")
+	if !ok {
+		sumStr = "10"
+	}
 	result.Sum = Decimal{}
 	if err = result.Sum.SetFromString(sumStr); err != nil {
 		errors = append(errors, NewFieldError(InQuery, "sum", fmt.Sprintf("can't create from string '%s'", sumStr), err))
 	}
+
+	testStr, _ := c.GetQuery("test")
+	result.Test = testStr
 
 	toStr, _ := c.GetQuery("to")
 	toSec, err := strconv.ParseInt(toStr, 10, 64)
@@ -249,7 +260,9 @@ func MakeGetFileRequest(c *gin.Context) (result GetFileRequest, errors []FieldEr
 }
 
 func MakeGetFileRequestPath(c *gin.Context) (result GetFileRequestPath, errors []FieldError) {
-	result.Filename, _ = c.Params.Get("filename")
+	filenameStr, _ := c.Params.Get("filename")
+	result.Filename = filenameStr
+
 	return
 }
 
@@ -320,9 +333,12 @@ func MakeGetPaymentRequest(c *gin.Context) (result GetPaymentRequest, errors []F
 }
 
 func MakeGetPaymentRequestQuery(c *gin.Context) (result GetPaymentRequestQuery, errors []FieldError) {
-	result.Async, _ = c.GetQuery("async")
+	asyncStr, _ := c.GetQuery("async")
+	result.Async = asyncStr
 
-	result.ID, _ = c.GetQuery("id")
+	idStr, _ := c.GetQuery("id")
+	result.ID = idStr
+
 	return
 }
 
@@ -527,9 +543,12 @@ func MakeCreateUserRequestBodyForm(c *gin.Context) (result CreateUserRequestBody
 		errors = append(errors, NewFieldError(InFormData, "avatar", "can't extract file from form-data", err))
 	}
 
-	result.Email, _ = getFormValue("email")
+	emailStr, _ := getFormValue("email")
+	result.Email = emailStr
 
-	result.Name, _ = getFormValue("name")
+	nameStr, _ := getFormValue("name")
+	result.Name = nameStr
+
 	return
 }
 
@@ -584,7 +603,9 @@ func MakeGetUserRequest(c *gin.Context) (result GetUserRequest, errors []FieldEr
 }
 
 func MakeGetUserRequestPath(c *gin.Context) (result GetUserRequestPath, errors []FieldError) {
-	result.UserID, _ = c.Params.Get("userId")
+	userIdStr, _ := c.Params.Get("userId")
+	result.UserID = userIdStr
+
 	return
 }
 
