@@ -39,6 +39,11 @@ paths:
               firstName:
                 type: string
 
+        - name: debug
+          in: query
+          schema:
+            type: boolean
+
         - name: sum
           in: query
           schema:

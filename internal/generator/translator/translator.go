@@ -90,6 +90,10 @@ func (f Field) IsArray() bool {
 	return f.Type == ArrayField
 }
 
+func (f Field) IsBoolean() bool {
+	return f.Type == BooleanField
+}
+
 func (f Field) IsString() bool {
 	return f.Type == StringField
 }
