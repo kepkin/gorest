@@ -643,6 +643,24 @@ func RegisterRoutes(r *gin.Engine, api PaymentGatewayAPI) {
 	r.Handle("GET", "/v1/user/:userId", e._PaymentGatewayAPI_GetUser_Handler)
 }
 
+type HandlerRegister func(operationID, httpMethod, relativePath string, handler gin.HandlerFunc)
+
+// CustomRouter
+func RegisterRoutesCustom(handlerRegister HandlerRegister, api PaymentGatewayAPI) {
+	e := &PaymentGatewayAPIServer{api}
+
+	handlerRegister("Example", "GET", "/v1/example/:year/:user", e._PaymentGatewayAPI_Example_Handler)
+
+	handlerRegister("GetFile", "GET", "/v1/files/:filename", e._PaymentGatewayAPI_GetFile_Handler)
+
+	handlerRegister("GetPayment", "GET", "/v1/payment", e._PaymentGatewayAPI_GetPayment_Handler)
+	handlerRegister("ProvidePayment", "POST", "/v1/payment", e._PaymentGatewayAPI_ProvidePayment_Handler)
+
+	handlerRegister("CreateUser", "POST", "/v1/user", e._PaymentGatewayAPI_CreateUser_Handler)
+
+	handlerRegister("GetUser", "GET", "/v1/user/:userId", e._PaymentGatewayAPI_GetUser_Handler)
+}
+
 type ID string
 
 func (t ID) Validate() (errors []FieldError) {
