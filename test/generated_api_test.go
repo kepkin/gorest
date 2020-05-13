@@ -116,3 +116,29 @@ func TestCreateUser(t *testing.T) {
 
 	assert.Equal(t, response.Body.Bytes(), photoBytes)
 }
+
+
+func TestCustomRouteWithMiddleWare(t *testing.T) {
+	r := gin.New()
+	api.RegisterRoutesCustom(func(operationID, httpMethod, relativePath string, handler gin.HandlerFunc) {
+		handlers := make([]gin.HandlerFunc, 0)
+
+		if operationID == "GetUser" {
+			handlers = append(handlers, func(c *gin.Context){
+				c.AbortWithStatus(401)
+			})
+		}
+
+		handlers = append(handlers, handler)
+		r.Handle(httpMethod, relativePath, handlers...)
+	}, api.NewPaymentGatewayAPI())
+
+	// Go to route with middle ware
+	request := httptest.NewRequest(http.MethodGet, "/v1/user/123", nil)
+	response := httptest.NewRecorder()
+
+	r.ServeHTTP(response, request)
+	if !assert.Equal(t, http.StatusUnauthorized, response.Code, response.Body.String()) {
+		return
+	}
+}
