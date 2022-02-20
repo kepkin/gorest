@@ -34,7 +34,7 @@ const (
 
 type FieldError struct {
 	In      ParamPlace
-	Field   string
+	BaseField   string
 	Message string
 	Reason  error
 }
@@ -42,7 +42,7 @@ type FieldError struct {
 func NewFieldError(in ParamPlace, f string, msg string, err error) FieldError {
 	return FieldError{
 		In:      in,
-		Field:   f,
+		BaseField:   f,
 		Message: msg,
 		Reason:  err,
 	}

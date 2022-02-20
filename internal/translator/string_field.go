@@ -1,12 +1,13 @@
 package translator
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"text/template"
 )
 
-type StringFieldImpl struct {
-	Field
+type stringField struct {
+	BaseField
 }
 
 //TODO: separate const stringDateGlobalTpl =
@@ -71,7 +72,10 @@ func stringConverter(input []string) (string, error) {
 }
 `
 
-func (c *StringFieldImpl) BuildGlobalCode() (string, error) {
+type StringFieldConstructor struct {
+}
+
+func (StringFieldConstructor) BuildGlobalCode() (string, error) {
 	tpl := template.Must(template.New("stringGlobalTpl").Parse(stringGlobalTpl))
 	res := strings.Builder{}
 	err := tpl.Execute(&res,
@@ -82,12 +86,46 @@ func (c *StringFieldImpl) BuildGlobalCode() (string, error) {
 	return res.String(), err
 }
 
-func (c *StringFieldImpl) ContextErrorRequired() bool {
-	return false
-}
-
-func (c *StringFieldImpl) ImportsRequired() []string {
+func (StringFieldConstructor) ImportsRequired() []string {
 	return []string{
 		"strconv",
 	}
+}
+
+func (StringFieldConstructor) RegisterAllFormats(res Translator) {
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.None, func(field BaseField, parentName string) Field {
+		field.GoType = "string"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.Date, func(field BaseField, parentName string) Field {
+		field.GoType = "time.Time"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.DateTime, func(field BaseField, parentName string) Field {
+		field.GoType = "time.Time"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.UnixTime, func(field BaseField, parentName string) Field {
+		field.GoType = "time.Time"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.Format("yyyy-mm-dd"), func(field BaseField, parentName string) Field {
+		field.GoType = "time.Time"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.Format("email"), func(field BaseField, parentName string) Field {
+		field.GoType = "string"
+		return &stringField{field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.Binary, func(field BaseField, parentName string) Field {
+		field.GoType = "[]byte"
+		return &stringField{field}
+	})
 }

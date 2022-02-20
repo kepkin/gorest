@@ -5,7 +5,7 @@ import (
 	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
-type FieldI interface {
+type Field interface {
 	Name2() string
 	ParameterName() string
 	StrVarName() string
@@ -16,16 +16,13 @@ type FieldI interface {
 	GoTypeString() string
 	SchemaType() openapi3.SchemaType
 
-	Fields() []FieldI
+	Fields() []Field
 
-	ContextErrorRequired() bool
-	ImportsRequired() []string
-	BuildGlobalCode() (string, error)
 	BuildDefinition() (string, error)
 }
 
-// Field represents struct field
-type Field struct {
+// BaseField represents struct field
+type BaseField struct {
 	Name      string    // UserID
 	GoType    string    // int64
 	Parameter string    // user_id
@@ -34,103 +31,99 @@ type Field struct {
 	Schema    openapi3.SchemaType
 }
 
-func (f Field) Name2() string {
+func (f BaseField) Name2() string {
 	return f.Name
 }
 
-func (f Field) ParameterName() string {
+func (f BaseField) ParameterName() string {
 	return f.Parameter
 }
 
-func (f Field) ContextErrorRequired() bool {
+func (f BaseField) ContextErrorRequired() bool {
 	return false
 }
 
-func (f Field) ImportsRequired() []string {
+func (f BaseField) ImportsRequired() []string {
 	return []string{}
 }
 
-func (f Field) StrVarName() string {
+func (f BaseField) StrVarName() string {
 	return strcase.ToLowerCamel(f.Parameter) + "Str"
 }
 
-func (f Field) SecondsVarName() string {
+func (f BaseField) SecondsVarName() string {
 	return strcase.ToLowerCamel(f.Parameter) + "Sec"
 }
 
-func (f Field) IsStruct() bool {
+func (f BaseField) IsStruct() bool {
 	return f.Type == StructField
 }
 
-func (f Field) IsComponent() bool {
+func (f BaseField) IsComponent() bool {
 	return f.Type == ComponentField
 }
 
-func (f Field) IsCustom() bool {
+func (f BaseField) IsCustom() bool {
 	return f.Type == CustomField
 }
 
-func (f Field) IsArray() bool {
+func (f BaseField) IsArray() bool {
 	return f.Type == ArrayField
 }
 
-func (f Field) IsBoolean() bool {
+func (f BaseField) IsBoolean() bool {
 	return f.Type == BooleanField
 }
 
-func (f Field) IsString() bool {
+func (f BaseField) IsString() bool {
 	return f.Type == StringField
 }
 
-func (f Field) IsInteger() bool {
+func (f BaseField) IsInteger() bool {
 	return f.Type == IntegerField
 }
 
-func (f Field) IsFloat() bool {
+func (f BaseField) IsFloat() bool {
 	return f.Type == FloatField
 }
 
-func (f Field) IsDate() bool {
+func (f BaseField) IsDate() bool {
 	return f.Type == DateField
 }
 
-func (f Field) IsDateTime() bool {
+func (f BaseField) IsDateTime() bool {
 	return f.Type == DateTimeField
 }
 
-func (f Field) IsUnixTime() bool {
+func (f BaseField) IsUnixTime() bool {
 	return f.Type == UnixTimeField
 }
 
-func (f Field) IsFile() bool {
+func (f BaseField) IsFile() bool {
 	return f.Type == FileField
 }
 
-func (f Field) IsRequired() bool {
+func (f BaseField) IsRequired() bool {
 	return f.Required
 }
 
-func (f Field) CheckDefault() bool {
+func (f BaseField) CheckDefault() bool {
 	//return f.Schema.Default != nil
 	return false
 }
 
-func (f Field) GoTypeString() string {
+func (f BaseField) GoTypeString() string {
 	return f.GoType
 }
 
-func (c Field) BuildGlobalCode() (string, error) {
-	return "", nil
+func (f BaseField) BuildDefinition() (string, error) {
+	return "type " + f.Name + " " + f.GoType + "\n", nil
 }
 
-func (c Field) BuildDefinition() (string, error) {
-	return "type " + c.Name + " " + c.GoType + "\n", nil
+func (f BaseField) Fields() []Field {
+	return []Field{}
 }
 
-func (c Field) Fields() []FieldI {
-	return []FieldI{}
-}
-
-func (c Field) SchemaType() openapi3.SchemaType {
-	return c.Schema
+func (f BaseField) SchemaType() openapi3.SchemaType {
+	return f.Schema
 }

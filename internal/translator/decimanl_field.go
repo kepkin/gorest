@@ -1,12 +1,13 @@
 package translator
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"text/template"
 )
 
-type DecimalFieldImpl struct {
-	Field
+type decimalField struct {
+	BaseField
 }
 
 const decimalGlobalTpl = `
@@ -27,7 +28,10 @@ func stringDecimalConverter(input []string) (decimal.Decimal, error) {
 }
 `
 
-func (c *DecimalFieldImpl) BuildGlobalCode() (string, error) {
+type DecimalFieldConstructor struct {
+}
+
+func (DecimalFieldConstructor) BuildGlobalCode() (string, error) {
 	tpl := template.Must(template.New("decimalGlobalTpl").Parse(decimalGlobalTpl))
 	res := strings.Builder{}
 	err := tpl.Execute(&res,
@@ -38,12 +42,23 @@ func (c *DecimalFieldImpl) BuildGlobalCode() (string, error) {
 	return res.String(), err
 }
 
-func (c *DecimalFieldImpl) ContextErrorRequired() bool {
-	return false
+func (DecimalFieldConstructor) ImportsRequired() []string {
+	return []string{}
 }
 
-func (c *DecimalFieldImpl) ImportsRequired() []string {
-	return []string{
-		"github.com/shopspring/decimal",
-	}
+func (DecimalFieldConstructor) RegisterAllFormats(res Translator) {
+	res.RegisterObjectFieldConstructor(openapi3.StringType, openapi3.Format("decimal"), func(field BaseField, parentName string) Field {
+		field.GoType = "decimal.Decimal"
+		return &decimalField{BaseField: field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.NumberType, openapi3.Format("decimal"), func(field BaseField, parentName string) Field {
+		field.GoType = "decimal.Decimal"
+		return &decimalField{BaseField: field}
+	})
+
+	res.RegisterObjectFieldConstructor(openapi3.IntegerType, openapi3.Format("decimal"), func(field BaseField, parentName string) Field {
+		field.GoType = "decimal.Decimal"
+		return &decimalField{BaseField: field}
+	})
 }

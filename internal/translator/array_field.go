@@ -2,18 +2,19 @@ package translator
 
 import (
 	"fmt"
-	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
+
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 )
 
-type ArrayFieldImpl struct {
-	Field
+type arrayField struct {
+	BaseField
 
 	Translator Translator
 	MakeIdentifier func(string) string
 }
 
-func (c *ArrayFieldImpl) BuildDefinition() (string, error) {
+func (c *arrayField) BuildDefinition() (string, error) {
 	res := strings.Builder{}
 
 	if c.Schema.Items.Ref != "" {
@@ -36,6 +37,35 @@ func (c *ArrayFieldImpl) BuildDefinition() (string, error) {
 	return res.String(), nil
 }
 
-func (c *ArrayFieldImpl) ContextErrorRequired() bool {
-	return false
+func (c *arrayField) RegisterAllFormats(translator Translator) {
+	translator.RegisterObjectFieldConstructor(openapi3.BooleanType, openapi3.Format(""), func(field BaseField, parentName string) Field {
+		field.GoType = "bool"
+		return &booleanField{field, "a"}
+	})
+}
+
+
+type ArrayFieldConstructor struct {
+}
+
+func (ArrayFieldConstructor) BuildGlobalCode() (string, error) {
+	return "", nil
+}
+
+func (ArrayFieldConstructor) ImportsRequired() []string {
+	return []string{}
+}
+
+func (ArrayFieldConstructor) RegisterAllFormats(res Translator) {
+	res.RegisterObjectFieldConstructor(openapi3.ArrayType, openapi3.None, func(field BaseField, parentName string) Field {
+		if field.Schema.Items.Ref != "" {
+			field.GoType = "[]" + res.RefResolver(field.Schema.Items.Ref)
+		} else if field.Schema.Items.Type == openapi3.ObjectType {
+			field.GoType = "[]" + parentName + res.MakeTitledIdentifier(field.Name) + "Item"
+		} else {
+			field.GoType = "[]" + string(field.Schema.Items.Type)
+		}
+
+		return &arrayField{BaseField: field, Translator: res, MakeIdentifier: res.MakeIdentifier}
+	})
 }

@@ -6,8 +6,8 @@ import (
 	"io"
 
 	"github.com/kepkin/gorest/internal/barber"
-	"github.com/kepkin/gorest/internal/translator"
 	"github.com/kepkin/gorest/internal/spec/openapi3"
+	"github.com/kepkin/gorest/internal/translator"
 )
 
 type Generator struct {
@@ -19,17 +19,16 @@ type Generator struct {
 type typeName = string
 type customFieldsSet map[typeName]translator.FieldPair
 
-func NewGenerator(packageName string) *Generator {
+func NewGenerator(packageName string, translator translator.Translator) *Generator {
 	return &Generator{
 		packageName:  packageName,
 		customFields: make(customFieldsSet),
+		translator: translator,
 	}
 }
 
 func (g *Generator) Generate(wr io.Writer, sp openapi3.Spec) error {
 	var content bytes.Buffer
-
-	g.translator = MakeTranslator()
 
 	if _, err := fmt.Fprintf(&content, PredefinedHeader, g.packageName); err != nil {
 		return err

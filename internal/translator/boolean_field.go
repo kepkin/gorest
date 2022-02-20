@@ -1,12 +1,13 @@
 package translator
 
 import (
+	"github.com/kepkin/gorest/internal/spec/openapi3"
 	"strings"
 	"text/template"
 )
 
-type BooleanFieldImpl struct {
-	Field
+type booleanField struct {
+	BaseField
 
 	ImplIdentifier string
 }
@@ -32,17 +33,27 @@ func booleanConverter(input []string) (bool, error) {
 }
 `
 
-func (c *BooleanFieldImpl) BuildGlobalCode() (string, error) {
+type BooleanFieldConstructor struct {
+}
+
+func (BooleanFieldConstructor) RegisterAllFormats(translator Translator) {
+	translator.RegisterObjectFieldConstructor(openapi3.BooleanType, openapi3.Format(""), func(field BaseField, parentName string) Field {
+		field.GoType = "bool"
+		return &booleanField{field, "a"}
+	})
+}
+
+func (BooleanFieldConstructor) BuildGlobalCode() (string, error) {
 	tpl := template.Must(template.New("booleanGlobalTpl").Parse(booleanGlobalTpl))
 	res := strings.Builder{}
 	err := tpl.Execute(&res,
 		struct {
 			GlobalIdentifier string
-		}{c.ImplIdentifier})
+		}{"a"})  //TODO: it's a prefix for converter functions. Might be obsolete
 
 	return res.String(), err
 }
 
-func (c *BooleanFieldImpl) ContextErrorRequired() bool {
-	return false
+func (BooleanFieldConstructor) ImportsRequired() []string {
+	return []string{}
 }

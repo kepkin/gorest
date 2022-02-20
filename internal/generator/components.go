@@ -25,17 +25,11 @@ func (g *Generator) makeComponents(wr io.Writer, sp openapi3.Spec) error {
 		}
 
 		for _, d := range defs {
-
 			definition, err := d.BuildDefinition()
 			if err != nil {
 				return err
 			}
 			wr.Write([]byte(definition))
-
-			//TODO
-			//if err := g.makeValidateFunc(wr, d); err != nil {
-			//	return err
-			//}
 		}
 	}
 

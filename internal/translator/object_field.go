@@ -8,17 +8,13 @@ import (
 	"text/template"
 )
 
-type ObjectFieldImpl struct {
-	Field
+type objectField struct {
+	BaseField
 
 	Translator Translator
 	MakeIdentifier func(string) string
 
-	fields []FieldI
-}
-
-func (c *ObjectFieldImpl) BuildGlobalCode() (string, error) {
-	return "", nil
+	fields []Field
 }
 
 var structTemplate = template.Must(template.New("struct").Parse(`
@@ -37,9 +33,9 @@ type {{ .Name }} struct {
 }
 `))
 
-func (c *ObjectFieldImpl) Fields() []FieldI {
+func (c *objectField) Fields() []Field {
 	if c.fields == nil {
-		c.fields = make([]FieldI, 0)
+		c.fields = make([]Field, 0)
 
 		requiredMap := make(map[string]bool)
 		for _, propName := range c.Schema.Required {
@@ -54,7 +50,7 @@ func (c *ObjectFieldImpl) Fields() []FieldI {
 
 			field, err := c.Translator.MakeObjectField(c.GoTypeString(), propID, *propSchema, propName, isRequired)
 			if err != nil {
-				panic(err)
+				panic(fmt.Errorf("error occured while building type %v.%v: %w", c.GoTypeString(), propName, err))
 			}
 
 			//TODO delme
@@ -72,9 +68,9 @@ func (c *ObjectFieldImpl) Fields() []FieldI {
 }
 
 //TODO: Think about different definitions
-// One is for struct Field
+// One is for struct BaseField
 // Other one is for defining a Type
-func (c *ObjectFieldImpl) BuildDefinition() (string, error) {
+func (c *objectField) BuildDefinition() (string, error) {
 	if c.GoType == "json.RawMessage" {
 		return "", nil
 	}
@@ -83,7 +79,7 @@ func (c *ObjectFieldImpl) BuildDefinition() (string, error) {
 	err := structWithJSONTagsTemplate.Execute(&res,
 		struct {
 			Name string
-			Fields []FieldI
+			Fields []Field
 	}{
 		c.GoType,
 		c.Fields(),
@@ -115,6 +111,28 @@ func (c *ObjectFieldImpl) BuildDefinition() (string, error) {
 	return res.String(), err
 }
 
-func (c *ObjectFieldImpl) ContextErrorRequired() bool {
-	return false
+type ObjectFieldConstructor struct {
+}
+
+func (ObjectFieldConstructor) RegisterAllFormats(translator Translator) {
+	translator.RegisterObjectFieldConstructor(openapi3.ObjectType, openapi3.None, func(field BaseField, parentName string) Field {
+		if field.Schema.Ref != "" {
+			field.GoType = translator.RefResolver(field.Schema.Ref)
+		} else if field.Schema.AdditionalProperties != nil && field.Schema.AdditionalProperties.Type == openapi3.ObjectType {
+			field.GoType = "json.RawMessage"
+		} else if field.Schema.AdditionalProperties != nil && field.Schema.AdditionalProperties.Type != openapi3.ObjectType {
+			panic(fmt.Sprintf("not implemented `AdditionalProperties` for %v: %v", field.Schema.AdditionalProperties.Type, field.Name2()))
+		} else {
+			field.GoType = parentName + translator.MakeTitledIdentifier(field.Name)
+		}
+		return &objectField{BaseField: field, Translator: translator, MakeIdentifier: translator.MakeIdentifier}
+	})
+}
+
+func (ObjectFieldConstructor) BuildGlobalCode() (string, error) {
+	return "", nil
+}
+
+func (ObjectFieldConstructor) ImportsRequired() []string {
+	return []string{}
 }
