@@ -37,7 +37,8 @@ func RegisterRoutesCustom(handlerRegister HandlerRegister, api {{ .InterfaceName
             {{- end }}
         {{- end }}
 	{{ end -}}
-}`))
+}
+`))
 
 func (Generator) makeRouter(wr io.Writer, sp openapi3.Spec) error {
 	return routerTemplate.Execute(wr, struct {
