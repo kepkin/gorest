@@ -43,7 +43,7 @@ func (DecimalFieldConstructor) BuildGlobalCode() (string, error) {
 }
 
 func (DecimalFieldConstructor) ImportsRequired() []string {
-	return []string{}
+	return []string{"github.com/shopspring/decimal"}
 }
 
 func (DecimalFieldConstructor) RegisterAllFormats(res Translator) {
