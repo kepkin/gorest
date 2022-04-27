@@ -1,0 +1,59 @@
+openapi: 3.0.0
+info:
+  title: Payment Gateway API
+  version: v1
+
+servers:
+  - url: https://superhost.ru/
+    description: Production
+
+  - url: http://localhost:8081/
+    description: Develop
+
+paths:
+  /v1/example:
+    post:
+      operationId: Example
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Payment'
+
+      parameters:
+        - name: test
+          in: query
+          required: true
+          schema:
+            type: string
+
+      responses:
+        '200':
+          description: OK
+
+components:
+  schemas:
+    Payment:
+      type: object
+      properties:
+        payment_id:
+          $ref: '#/components/schemas/ID'
+
+        merchant_id:
+          type: string
+
+        sum:
+          type: number
+          format: decimal
+
+        type:
+          type: string
+          enum:
+            - deposit
+            - payment
+
+    ID:
+      type:
+        string

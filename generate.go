@@ -23,7 +23,7 @@ type Options struct {
 // Generates go file from swagger specification
 func Generate(swaggerFile string, options Options) (err error) {
 	pkgName := "api"
-	if options.PackageName == "" {
+	if options.PackageName != "" {
 		pkgName = options.PackageName
 	}
 
